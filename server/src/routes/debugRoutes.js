@@ -81,40 +81,67 @@ router.get('/playwright', async (req, res) => {
     const results = {
         timestamp: new Date().toISOString(),
         targetUrl,
+        env: {
+            nodeVersion: process.version,
+            platform: process.platform,
+            arch: process.arch
+        },
         browserInfo: {}
     };
 
     let browser;
     try {
+        console.log(`[PLAYWRIGHT_DEBUG] Attempting to launch chromium for ${targetUrl}`);
         browser = await chromium.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         });
+        
         const context = await browser.newContext({
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            viewport: { width: 1280, height: 720 }
+            viewport: { width: 1280, height: 720 },
+            extraHTTPHeaders: {
+                'Accept-Language': 'en-IN,en;q=0.9,hi-IN;q=0.8'
+            }
         });
+        
         const page = await context.newPage();
+        console.log(`[PLAYWRIGHT_DEBUG] Navigating to ${targetUrl}...`);
+        
+        const response = await page.goto(targetUrl, { 
+            waitUntil: 'networkidle', 
+            timeout: 60000 // Increased timeout for slow Render instances
+        });
 
-        const response = await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 30000 });
+        const title = await page.title();
+        const content = await page.content();
+        const bodyText = await page.evaluate(() => document.body.innerText);
 
         results.browserInfo = {
             status: response.status(),
-            title: await page.title(),
+            title: title,
             finalUrl: page.url(),
-            bodyText: (await page.evaluate(() => document.body.innerText)).substring(0, 1000).replace(/\s+/g, ' ')
+            bodyTextPreview: bodyText.substring(0, 2000).replace(/\s+/g, ' ')
         };
 
-        let blockType = 'Unknown';
-        const html = await page.content();
-        if (html.toLowerCase().includes('cloudflare')) blockType = 'Cloudflare';
-        else if (html.toLowerCase().includes('akamai')) blockType = 'Akamai';
-        else if (results.browserInfo.title === 'Site Maintenance') blockType = 'Site Maintenance';
+        let blockType = 'None Detected';
+        const lowerHtml = content.toLowerCase();
+        if (lowerHtml.includes('cloudflare')) blockType = 'Cloudflare';
+        else if (lowerHtml.includes('akamai')) blockType = 'Akamai';
+        else if (title === 'Site Maintenance' || bodyText.includes('Something went wrong')) blockType = 'Site Maintenance';
+        else if (lowerHtml.includes('access denied')) blockType = 'Access Denied';
         
         results.blockType = blockType;
+        results.success = !blockType.includes('Site Maintenance') && !blockType.includes('Denied');
 
         res.json({ success: true, results });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message, results });
+        console.error(`[PLAYWRIGHT_ERROR] ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message,
+            tip: error.message.includes('executable') ? 'Chromium binary missing. Ensure "npx playwright install chromium" ran during build.' : 'Check Render logs for dependency errors.',
+            results 
+        });
     } finally {
         if (browser) await browser.close();
     }
