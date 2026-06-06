@@ -11,14 +11,35 @@ const BRANDS_TO_TRACK = [
 ];
 
 const initCronJobs = () => {
+  // Auto-reset stuck crawl on startup
+  const resetStuckCrawl = async () => {
+    try {
+      await SystemStatus.findOneAndUpdate(
+        { key: 'main_status' },
+        { isCrawling: false, currentBrand: null },
+        { upsert: true }
+      );
+      console.log('Stuck crawl state reset on startup.');
+    } catch (e) {
+      console.error('Failed to reset stuck crawl', e);
+    }
+  };
+
   const runJob = async () => {
     let status = await SystemStatus.findOne({ key: 'main_status' });
     if (!status) {
       status = new SystemStatus({ key: 'main_status' });
     }
 
+    // If crawling for more than 30 mins, assume it's stuck and override
+    const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (status.isCrawling && status.updatedAt < thirtyMinsAgo) {
+        console.warn(`[${new Date().toISOString()}] Crawl appears stuck (started ${status.updatedAt}). Resetting.`);
+        status.isCrawling = false;
+    }
+
     if (status.isCrawling) {
-        console.log(`[${new Date().toISOString()}] Crawl already in progress. Skipping.`);
+        console.log(`[${new Date().toISOString()}] Crawl already in progress (${status.currentBrand}). Skipping.`);
         return;
     }
 
@@ -73,7 +94,7 @@ const initCronJobs = () => {
   
   // Also run once on startup
   console.log('Initial cron job triggered on startup.');
-  runJob();
+  resetStuckCrawl().then(() => runJob());
 };
 
 module.exports = initCronJobs;
