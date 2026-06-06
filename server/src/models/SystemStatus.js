@@ -22,6 +22,12 @@ const SystemStatusSchema = new mongoose.Schema({
   cronActive: {
     type: Boolean,
     default: true
+  },
+  currentBrand: String,
+  brandsCompleted: [String],
+  isCrawling: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

@@ -12,31 +12,48 @@ const BRANDS_TO_TRACK = [
 
 const initCronJobs = () => {
   const runJob = async () => {
-    console.log(`[${new Date().toISOString()}] Starting cron cycle...`);
-    
-    const startTime = new Date();
     let status = await SystemStatus.findOne({ key: 'main_status' });
     if (!status) {
       status = new SystemStatus({ key: 'main_status' });
     }
 
-    status.lastCrawlStart = startTime;
+    if (status.isCrawling) {
+        console.log(`[${new Date().toISOString()}] Crawl already in progress. Skipping.`);
+        return;
+    }
+
+    console.log(`[${new Date().toISOString()}] Starting cron cycle...`);
+    
+    status.lastCrawlStart = new Date();
+    status.isCrawling = true;
+    status.brandsCompleted = [];
+    status.lastCrawlProductsCount = 0;
+    status.lastCrawlNewProducts = 0;
+    status.lastCrawlUpdatedProducts = 0;
     await status.save();
 
     try {
-      console.log(`[${new Date().toISOString()}] Scraper started for ${BRANDS_TO_TRACK.length} brands...`);
-      const data = await MyntraScraper.scrapeBrands(BRANDS_TO_TRACK, 50); 
-      console.log(`[${new Date().toISOString()}] Scraper finished. Found ${data.length} products.`);
-      
-      console.log(`[${new Date().toISOString()}] Processing products...`);
-      const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
-      console.log(`[${new Date().toISOString()}] Processing finished. New: ${newProducts}, Updated: ${updatedProducts}`);
+      for (const brand of BRANDS_TO_TRACK) {
+        status.currentBrand = brand;
+        await status.save();
+
+        console.log(`[${new Date().toISOString()}] Scraping brand: ${brand}`);
+        const data = await MyntraScraper.scrapeBrands([brand], 20); // 20 pages per brand
+        
+        console.log(`[${new Date().toISOString()}] Processing ${data.length} products for ${brand}`);
+        const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
+        
+        status.lastCrawlProductsCount += data.length;
+        status.lastCrawlNewProducts += newProducts;
+        status.lastCrawlUpdatedProducts += updatedProducts;
+        status.brandsCompleted.push(brand);
+        await status.save();
+      }
 
       status.lastCrawlEnd = new Date();
       status.lastCrawlSuccess = true;
-      status.lastCrawlProductsCount = data.length;
-      status.lastCrawlNewProducts = newProducts;
-      status.lastCrawlUpdatedProducts = updatedProducts;
+      status.isCrawling = false;
+      status.currentBrand = null;
       status.lastError = null;
       await status.save();
       
@@ -45,6 +62,7 @@ const initCronJobs = () => {
       console.error(`[${new Date().toISOString()}] Error in cron job:`, error.message);
       status.lastCrawlEnd = new Date();
       status.lastCrawlSuccess = false;
+      status.isCrawling = false;
       status.lastError = error.message;
       await status.save();
     }

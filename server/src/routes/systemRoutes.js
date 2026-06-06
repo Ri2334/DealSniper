@@ -87,27 +87,45 @@ router.get('/ping', async (req, res) => {
 });
 
 async function runManualCrawl() {
-    const startTime = new Date();
     let status = await SystemStatus.findOne({ key: 'main_status' });
     if (!status) status = new SystemStatus({ key: 'main_status' });
 
-    status.lastCrawlStart = startTime;
+    if (status.isCrawling) return;
+
+    status.lastCrawlStart = new Date();
+    status.isCrawling = true;
+    status.brandsCompleted = [];
+    status.lastCrawlProductsCount = 0;
+    status.lastCrawlNewProducts = 0;
+    status.lastCrawlUpdatedProducts = 0;
     await status.save();
 
     try {
-      const data = await MyntraScraper.scrapeBrands(BRANDS_TO_TRACK, 30);
-      const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
+      for (const brand of BRANDS_TO_TRACK) {
+        status.currentBrand = brand;
+        await status.save();
+        
+        const data = await MyntraScraper.scrapeBrands([brand], 10); // Even lighter for manual trigger
+        const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
+        
+        status.lastCrawlProductsCount += data.length;
+        status.lastCrawlNewProducts += newProducts;
+        status.lastCrawlUpdatedProducts += updatedProducts;
+        status.brandsCompleted.push(brand);
+        await status.save();
+      }
 
       status.lastCrawlEnd = new Date();
       status.lastCrawlSuccess = true;
-      status.lastCrawlProductsCount = data.length;
-      status.lastCrawlNewProducts = newProducts;
-      status.lastCrawlUpdatedProducts = updatedProducts;
+      status.isCrawling = false;
+      status.currentBrand = null;
       status.lastError = null;
       await status.save();
     } catch (error) {
+      console.error('Manual crawl failed:', error.message);
       status.lastCrawlEnd = new Date();
       status.lastCrawlSuccess = false;
+      status.isCrawling = false;
       status.lastError = error.message;
       await status.save();
     }
