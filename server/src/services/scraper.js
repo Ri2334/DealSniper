@@ -24,7 +24,7 @@ class MyntraScraper {
 
         while (retries > 0 && !success) {
           try {
-            const { data } = await axios.get(url, {
+            const response = await axios.get(url, {
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -34,14 +34,20 @@ class MyntraScraper {
               timeout: 20000
             });
 
+            const data = response.data;
+
             const markerRegex = /window\.__myx(_data)?\s*=\s*/;
             const match = data.match(markerRegex);
             
             if (!match) {
-              console.error(`Page ${currentPage}: Could not find window.__myx marker. Title: ${data.match(/<title>(.*?)<\/title>/)?.[1] || 'Unknown'}`);
-              // If we fail, let's log a bit of the body to see if it's a bot check
-              if (data.includes('checking your browser') || data.includes('Access Denied')) {
-                console.error('Bot detection triggered on Myntra.');
+              const title = data.match(/<title>(.*?)<\/title>/)?.[1] || 'Unknown';
+              console.error(`[SCRAPE_FAILURE] Page ${currentPage}: Marker not found. Title: ${title}`);
+              console.error(`[SCRAPE_FAILURE] Status: ${response.status}`);
+              console.error(`[SCRAPE_FAILURE] Final URL: ${response.request.res.responseUrl || url}`);
+              console.error(`[SCRAPE_FAILURE] HTML SNIPPET (2000 chars): ${data.substring(0, 2000).replace(/\s+/g, ' ')}`);
+              
+              if (data.includes('checking your browser') || data.includes('Access Denied') || data.includes('maintenance')) {
+                console.error('[SCRAPE_FAILURE] Detected WAF, Bot Check, or Maintenance page.');
               }
               retries--;
               await new Promise(r => setTimeout(r, 3000));

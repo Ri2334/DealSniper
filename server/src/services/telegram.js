@@ -175,11 +175,19 @@ const launchBot = () => {
         console.log('Telegram Bot Polling started.');
       })
       .catch(err => {
-        console.error('Telegram bot failed to launch', err);
+        if (err.response && err.response.error_code === 409) {
+          console.warn('Telegram bot conflict (409). Likely another instance is running. Polling skipped for this process.');
+        } else {
+          console.error('Telegram bot failed to launch', err);
+        }
         isBotLaunched = false;
       });
   }
 };
+
+// Cleanup on exit
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 module.exports = { 
   sendDealAlert: TelegramService.sendDealAlert, 
