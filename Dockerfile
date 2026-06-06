@@ -16,11 +16,11 @@ RUN npm install
 # Install Chromium for the specific Playwright version in package.json
 RUN npx playwright install chromium
 
-# Verify Playwright installation (at least check if executable exists)
-RUN npm run verify-playwright || (echo "Playwright Verification Failed during build" && exit 1)
-
 # Copy the rest of the server code
 COPY server/ .
+
+# Verify Playwright installation (at least check if executable exists)
+RUN npm run verify-playwright || (echo "Playwright Verification Failed during build" && exit 1)
 
 # Set environment variables
 ENV NODE_ENV=production
