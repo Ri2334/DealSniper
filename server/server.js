@@ -5,12 +5,16 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./src/config/db');
 const initCronJobs = require('./src/jobs/cron');
+const { launchBot } = require('./src/services/telegram');
 
 // Connect Database
 connectDB();
 
 // Initialize Cron Jobs
 initCronJobs();
+
+// Initialize Telegram Bot Subscriptions
+launchBot();
 
 const app = express();
 

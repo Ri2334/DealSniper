@@ -10,12 +10,26 @@ class ProductMonitor {
     if (text.includes('shirt') && !text.includes('t-shirt') && !text.includes('tshirt')) return 'Shirts';
     if (text.includes('t-shirt') || text.includes('tshirt') || text.includes('tee')) return 'T-Shirts';
     if (text.includes('jeans')) return 'Jeans';
-    if (text.includes('trouser') || text.includes('chino') || text.includes('pant')) return 'Trousers';
+    if (text.includes('trouser') || text.includes('chino') || text.includes('pant') || text.includes('short')) return 'Trousers';
     if (text.includes('jacket') || text.includes('coat')) return 'Jackets';
     if (text.includes('sweatshirt') || text.includes('hoodie') || text.includes('sweater') || text.includes('pullover')) return 'Sweatshirts';
     if (text.includes('shoe') || text.includes('sneaker') || text.includes('footwear') || text.includes('boot') || text.includes('flip flop') || text.includes('sandal')) return 'Shoes';
     if (text.includes('belt') || text.includes('wallet') || text.includes('watch') || text.includes('bag') || text.includes('backpack') || text.includes('sock') || text.includes('cap') || text.includes('hat') || text.includes('sunglass')) return 'Accessories';
     return 'Other';
+  }
+
+  static categorizeGenderAndAge(name, url) {
+    const text = `${name} ${url}`.toLowerCase();
+    let gender = 'Unisex';
+    let ageGroup = 'Adult';
+
+    if (text.includes('boy')) { gender = 'Boys'; ageGroup = 'Kids'; }
+    else if (text.includes('girl')) { gender = 'Girls'; ageGroup = 'Kids'; }
+    else if (text.includes('kid') || text.includes('infant') || text.includes('toddler')) { ageGroup = 'Kids'; }
+    else if (text.includes('women') || text.includes('woman')) { gender = 'Women'; }
+    else if (text.includes('men') || text.includes('man')) { gender = 'Men'; }
+
+    return { gender, ageGroup };
   }
 
   static async processFetchedProducts(scrapedProducts) {
@@ -26,6 +40,13 @@ class ProductMonitor {
 
         // Auto-categorize
         item.category = this.categorize(item.name, item.url, item.category);
+        const demoInfo = this.categorizeGenderAndAge(item.name, item.url);
+        item.gender = demoInfo.gender;
+        item.ageGroup = demoInfo.ageGroup;
+
+        // Brand Normalization
+        if (item.brand === 'Levis') item.brand = "Levi's";
+        if (item.brand === 'RARE RABBIT') item.brand = 'Rare Rabbit';
 
         if (!product) {
           // New product

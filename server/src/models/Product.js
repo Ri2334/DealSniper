@@ -15,8 +15,10 @@ const productSchema = new mongoose.Schema({
   lowestPrice: { type: Number },
   discountPercent: { type: Number, required: true, index: true },
   dealScore: { type: Number, default: 0, index: true },
-  lastUpdated: { type: Date, default: Date.now },
+  lastUpdated: { type: Date, default: Date.now, index: true },
   category: { type: String, index: true, default: 'Other' },
+  gender: { type: String, index: true, default: 'Unisex' },
+  ageGroup: { type: String, index: true, default: 'Adult' },
   sizes: [{ type: String }],
   availability: { type: Boolean, default: true }
 }, { timestamps: true });

@@ -25,24 +25,29 @@ const StatCard = ({ title, value, icon: Icon, trend, color = "blue" }: any) => {
 };
 
 const ProductRankItem = ({ product, index }: any) => (
-  <div className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100 group">
+  <a 
+    href={product.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100 hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
+  >
     <div className="w-8 font-black text-gray-300 group-hover:text-primary transition-colors text-lg italic">
       #{index + 1}
     </div>
-    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner">
-      <img src={product.image} alt="" className="w-full h-full object-cover" />
+    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 shadow-inner group-hover:shadow-sm transition-shadow">
+      <img src={product.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
     </div>
     <div className="flex-1 min-w-0">
-      <h4 className="text-sm font-bold text-gray-900 truncate">{product.name}</h4>
+      <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-primary transition-colors">{product.name}</h4>
       <p className="text-[10px] text-gray-500 font-bold uppercase">{product.brand} • {product.category}</p>
     </div>
     <div className="flex flex-col items-end">
-      <div className="bg-primary text-white px-2 py-0.5 rounded-full text-[10px] font-black">
+      <div className="bg-primary text-white px-2 py-0.5 rounded-full text-[10px] font-black shadow-sm group-hover:shadow-md transition-shadow">
         {product.dealScore} SCORE
       </div>
       <p className="text-xs font-bold text-gray-900 mt-1">₹{product.currentPrice}</p>
     </div>
-  </div>
+  </a>
 );
 
 const Dashboard = () => {
@@ -143,7 +148,7 @@ const Dashboard = () => {
                       <span className="text-xs font-black text-primary">{c.count}</span>
                    </div>
                    <div className="w-full bg-gray-50 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-primary h-full rounded-full" style={{ width: `${Math.min(100, (c.count / stats.totalProducts) * 500)}%` }}></div>
+                      <div className="bg-primary h-full rounded-full" style={{ width: `${Math.min(100, (c.count / (stats.totalProducts || 1)) * 500)}%` }}></div>
                    </div>
                 </div>
               ))}

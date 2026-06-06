@@ -3,14 +3,46 @@ const Alert = require('../models/Alert');
 
 exports.getProducts = async (req, res, next) => {
   try {
-    const { keyword, brand, minDiscount, category, sortBy, page = 1, limit = 20 } = req.query;
+    const { 
+      keyword, brand, category, gender, ageGroup, 
+      minDiscount, maxDiscount, priceMin, priceMax, 
+      dealScoreMin, dealScoreMax, lowestPriceOnly, hotDealsOnly, 
+      sortBy, page = 1, limit = 20 
+    } = req.query;
     
     let query = {};
 
     if (keyword) query.name = { $regex: keyword, $options: 'i' };
-    if (brand) query.brand = { $regex: new RegExp(`^${brand}$`, 'i') };
-    if (category) query.category = category;
-    if (minDiscount) query.discountPercent = { $gte: Number(minDiscount) };
+    
+    if (brand) query.brand = { $in: brand.split(',').map(b => new RegExp(`^${b.trim()}$`, 'i')) };
+    if (category) query.category = { $in: category.split(',') };
+    if (gender) query.gender = { $in: gender.split(',') };
+    if (ageGroup) query.ageGroup = { $in: ageGroup.split(',') };
+
+    if (minDiscount || maxDiscount) {
+      query.discountPercent = {};
+      if (minDiscount) query.discountPercent.$gte = Number(minDiscount);
+      if (maxDiscount) query.discountPercent.$lte = Number(maxDiscount);
+    }
+
+    if (priceMin || priceMax) {
+      query.currentPrice = {};
+      if (priceMin) query.currentPrice.$gte = Number(priceMin);
+      if (priceMax) query.currentPrice.$lte = Number(priceMax);
+    }
+
+    if (dealScoreMin || dealScoreMax || hotDealsOnly === 'true') {
+      query.dealScore = {};
+      if (dealScoreMin) query.dealScore.$gte = Number(dealScoreMin);
+      if (dealScoreMax) query.dealScore.$lte = Number(dealScoreMax);
+      if (hotDealsOnly === 'true') {
+         query.dealScore.$gte = Math.max(Number(dealScoreMin || 0), 70);
+      }
+    }
+
+    if (lowestPriceOnly === 'true') {
+      query.$expr = { $lte: ["$currentPrice", "$lowestPrice"] };
+    }
 
     let sortOption = { dealScore: -1 }; // Default sort by Deal Intelligence
     if (sortBy === 'price_asc') sortOption = { currentPrice: 1 };
@@ -18,19 +50,21 @@ exports.getProducts = async (req, res, next) => {
     if (sortBy === 'discount_desc') sortOption = { discountPercent: -1 };
     if (sortBy === 'newest') sortOption = { lastUpdated: -1 };
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+    const parsedLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (parsedPage - 1) * parsedLimit;
 
     const products = await Product.find(query)
       .sort(sortOption)
       .skip(skip)
-      .limit(Number(limit));
+      .limit(parsedLimit);
       
     const total = await Product.countDocuments(query);
 
     res.json({
       products,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
+      page: parsedPage,
+      pages: Math.ceil(total / parsedLimit),
       total
     });
   } catch (error) {
