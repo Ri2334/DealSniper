@@ -14,7 +14,7 @@ connectDB();
 initCronJobs();
 
 // Initialize Telegram Bot Subscriptions
-// Deployment Heartbeat: 2026-06-06 15:15
+// Deployment Heartbeat: 2026-06-06 15:45
 launchBot();
 
 const app = express();
@@ -34,10 +34,12 @@ app.get('/', (req, res) => {
 const authRoutes = require('./src/routes/authRoutes');
 const productRoutes = require('./src/routes/productRoutes');
 const systemRoutes = require('./src/routes/systemRoutes');
+const debugRoutes = require('./src/routes/debugRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/debug', debugRoutes);
 
 
 // Error Handling Middleware
