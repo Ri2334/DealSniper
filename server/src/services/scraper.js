@@ -34,17 +34,23 @@ class MyntraScraper {
               timeout: 20000
             });
 
-            const startMarker = 'window.__myx = ';
-            const startIndex = data.indexOf(startMarker);
+            const markerRegex = /window\.__myx(_data)?\s*=\s*/;
+            const match = data.match(markerRegex);
             
-            if (startIndex === -1) {
-              console.error(`Page ${currentPage}: Could not find window.__myx data. Retrying...`);
+            if (!match) {
+              console.error(`Page ${currentPage}: Could not find window.__myx marker. Title: ${data.match(/<title>(.*?)<\/title>/)?.[1] || 'Unknown'}`);
+              // If we fail, let's log a bit of the body to see if it's a bot check
+              if (data.includes('checking your browser') || data.includes('Access Denied')) {
+                console.error('Bot detection triggered on Myntra.');
+              }
               retries--;
-              await new Promise(r => setTimeout(r, 2000));
+              await new Promise(r => setTimeout(r, 3000));
               continue;
             }
 
-            let jsonString = data.substring(startIndex + startMarker.length);
+            const startIndex = match.index;
+            const markerLength = match[0].length;
+            let jsonString = data.substring(startIndex + markerLength);
             const endIndex = jsonString.indexOf('</script>');
             if (endIndex === -1) {
                  retries--;

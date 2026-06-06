@@ -1,7 +1,11 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 const TelegramService = require('./src/services/telegram');
 
 async function testTelegram() {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log('Connected to MongoDB');
+
   const dummyProduct = {
     brand: 'H&M',
     name: 'Slim Fit Cotton Shirt (Test)',
@@ -13,7 +17,7 @@ async function testTelegram() {
   };
 
   console.log('Sending test Telegram alert...');
-  await TelegramService.sendDealAlert(dummyProduct, 56, 96, 999);
+  await TelegramService.sendDealAlert(dummyProduct, 56, 96, 999, true);
   console.log('Test completed.');
   process.exit(0);
 }
