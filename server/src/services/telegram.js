@@ -1,5 +1,6 @@
 const { Telegraf, Markup } = require('telegraf');
 const TelegramSubscriber = require('../models/TelegramSubscriber');
+const SystemStatus = require('../models/SystemStatus');
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 const channelId = process.env.TELEGRAM_CHANNEL_ID;
@@ -116,10 +117,13 @@ class TelegramService {
 _Intelligence Engine v3.0_
     `;
 
+    let alertSent = false;
+
     // 1. Send to Global Channel if defined
     if (channelId) {
       try {
         await bot.telegram.sendMessage(channelId, message, { parse_mode: 'Markdown' });
+        alertSent = true;
       } catch (error) {
         console.error(`Failed to send Telegram channel alert: ${error.message}`);
       }
@@ -133,7 +137,9 @@ _Intelligence Engine v3.0_
          const brandMatch = sub.brands.length === 0 || sub.brands.includes(product.brand);
          
          if (catMatch && brandMatch) {
-            await bot.telegram.sendMessage(sub.chatId, message, { parse_mode: 'Markdown' }).catch(e => {
+            await bot.telegram.sendMessage(sub.chatId, message, { parse_mode: 'Markdown' }).then(() => {
+                alertSent = true;
+            }).catch(e => {
                if(e.code === 403) {
                   // User blocked bot
                   sub.isActive = false;
@@ -144,6 +150,17 @@ _Intelligence Engine v3.0_
       }
     } catch(err) {
       console.error('Error dispatching to subscribers', err);
+    }
+
+    if (alertSent) {
+      await SystemStatus.findOneAndUpdate(
+        { key: 'main_status' },
+        { 
+          $set: { lastTelegramAlertSent: new Date() },
+          $inc: { totalAlertsSent: 1 }
+        },
+        { upsert: true }
+      );
     }
   }
 }

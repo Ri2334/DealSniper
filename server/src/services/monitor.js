@@ -33,6 +33,9 @@ class ProductMonitor {
   }
 
   static async processFetchedProducts(scrapedProducts) {
+    let newProducts = 0;
+    let updatedProducts = 0;
+
     for (const item of scrapedProducts) {
       try {
         let product = await Product.findOne({ productId: item.productId });
@@ -50,6 +53,7 @@ class ProductMonitor {
 
         if (!product) {
           // New product
+          newProducts++;
           item.lowestPrice = item.currentPrice;
           item.highestPrice = item.currentPrice;
           
@@ -64,7 +68,7 @@ class ProductMonitor {
           
           let hasChanged = false;
           if (product.currentPrice !== item.currentPrice || product.discountPercent !== item.discountPercent) {
-            
+            updatedProducts++;
             // Calculate True Price Drop
             if (product.currentPrice > item.currentPrice) {
                const drop = ((product.currentPrice - item.currentPrice) / product.currentPrice) * 100;
@@ -108,7 +112,7 @@ class ProductMonitor {
         }
 
         // Evaluate deal for alerting
-        const { isDeal, dropPercent, score, isLowestPrice, confidenceScore, trendScore } = DealEngine.evaluateDeal(product, previousPrice);
+        const { isDeal, dropPercent, score, isLowestPrice } = DealEngine.evaluateDeal(product, previousPrice);
 
         // Update product with new intelligence metrics
         product.dealScore = score;
@@ -149,6 +153,8 @@ class ProductMonitor {
         console.error(`Error processing product ${item.productId}:`, err.message);
       }
     }
+
+    return { newProducts, updatedProducts };
   }
 }
 

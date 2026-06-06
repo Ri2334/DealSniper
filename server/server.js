@@ -32,9 +32,12 @@ app.get('/', (req, res) => {
 // Import Routes
 const authRoutes = require('./src/routes/authRoutes');
 const productRoutes = require('./src/routes/productRoutes');
+const systemRoutes = require('./src/routes/systemRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/system', systemRoutes);
+
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

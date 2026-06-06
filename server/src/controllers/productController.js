@@ -7,7 +7,7 @@ exports.getProducts = async (req, res, next) => {
       keyword, brand, category, gender, ageGroup, 
       minDiscount, maxDiscount, priceMin, priceMax, 
       dealScoreMin, dealScoreMax, lowestPriceOnly, hotDealsOnly, 
-      sortBy, page = 1, limit = 20 
+      newTodayOnly, sortBy, page = 1, limit = 20 
     } = req.query;
     
     let query = {};
@@ -18,6 +18,13 @@ exports.getProducts = async (req, res, next) => {
     if (category) query.category = { $in: category.split(',') };
     if (gender) query.gender = { $in: gender.split(',') };
     if (ageGroup) query.ageGroup = { $in: ageGroup.split(',') };
+
+    if (newTodayOnly === 'true') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        query.lastUpdated = { $gte: today };
+    }
+
 
     if (minDiscount || maxDiscount) {
       query.discountPercent = {};
