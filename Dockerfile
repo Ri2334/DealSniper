@@ -1,5 +1,5 @@
 # Use the official Playwright image which includes all OS dependencies
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy
+FROM mcr.microsoft.com/playwright:v1.50.0-jammy
 
 WORKDIR /app
 

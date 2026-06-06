@@ -106,6 +106,10 @@ class MyntraScraper extends ScraperAdapter {
                 });
 
                 console.log(`[GATEWAY_RESPONSE] [${brand}] Page ${p} Status: ${response.status}`);
+                
+                // DEBUG: Log top-level keys
+                const dataKeys = response.data ? Object.keys(response.data) : 'N/A';
+                console.log(`[GATEWAY_DEBUG] [${brand}] Top-level keys: ${JSON.stringify(dataKeys)}`);
 
                 const results = response.data?.searchData?.results?.products;
                 if (results && results.length > 0) {
@@ -116,6 +120,13 @@ class MyntraScraper extends ScraperAdapter {
                     if (!response.data.searchData.results.hasNextPage) break;
                 } else {
                     console.warn(`[GATEWAY_NO_DATA] [${brand}] Page ${p}: searchData.results.products is empty or missing`);
+                    // Extra debug for deeper structure
+                    if (response.data?.searchData) {
+                        console.log(`[GATEWAY_DEBUG] [${brand}] searchData keys: ${JSON.stringify(Object.keys(response.data.searchData))}`);
+                        if (response.data.searchData.results) {
+                             console.log(`[GATEWAY_DEBUG] [${brand}] searchData.results keys: ${JSON.stringify(Object.keys(response.data.searchData.results))}`);
+                        }
+                    }
                     break;
                 }
                 
@@ -225,6 +236,16 @@ class MyntraScraper extends ScraperAdapter {
                 console.log(`[HTML_RESPONSE] [${brand}] Page ${p} Status: ${response.status}`);
                 const html = response.data;
                 
+                // DEBUG: Search for script markers
+                const markers = ['__myx', '__myx_data', 'searchData', 'results'];
+                markers.forEach(m => {
+                    const pos = html.indexOf(m);
+                    if (pos !== -1) {
+                        const snippet = html.substring(Math.max(0, pos - 100), Math.min(html.length, pos + 400)).replace(/\s+/g, ' ');
+                        console.log(`[HTML_DEBUG] [${brand}] Found marker '${m}' at ${pos}. Snippet: ${snippet}`);
+                    }
+                });
+
                 // More resilient regex to find __myx
                 const match = html.match(/window\.__myx(_data)?\s*=\s*({.*?})[\s;]*<\/script>/);
                 
