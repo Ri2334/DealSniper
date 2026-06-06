@@ -165,10 +165,19 @@ _Intelligence Engine v3.0_
   }
 }
 
+let isBotLaunched = false;
+
 const launchBot = () => {
-  if (process.env.TELEGRAM_BOT_TOKEN) {
-    bot.launch().catch(err => console.error('Telegram bot failed to launch', err));
-    console.log('Telegram Bot Polling started.');
+  if (process.env.TELEGRAM_BOT_TOKEN && !isBotLaunched) {
+    bot.launch()
+      .then(() => {
+        isBotLaunched = true;
+        console.log('Telegram Bot Polling started.');
+      })
+      .catch(err => {
+        console.error('Telegram bot failed to launch', err);
+        isBotLaunched = false;
+      });
   }
 };
 

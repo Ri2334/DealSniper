@@ -54,9 +54,24 @@ router.get('/ping', async (req, res) => {
         const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
 
         let triggered = false;
-        if (!status || !status.lastCrawlStart || status.lastCrawlStart < thirtyMinutesAgo) {
-            console.log('Manual crawl triggered via ping due to inactivity');
-            runManualCrawl(); // Run in background
+        
+        // Trigger if:
+        // 1. No status exists
+        // 2. Last crawl start is older than 30 mins AND it's not currently running (lastCrawlEnd >= lastCrawlStart)
+        // 3. Last crawl failed and was more than 10 mins ago
+        
+        const isStale = !status?.lastCrawlStart || status.lastCrawlStart < thirtyMinutesAgo;
+        const isNotRunning = !status || (status.lastCrawlEnd && status.lastCrawlEnd >= status.lastCrawlStart);
+        const lastFailed = status && !status.lastCrawlSuccess;
+        const failedTenMinsAgo = status?.lastCrawlEnd && status.lastCrawlEnd < new Date(now.getTime() - 10 * 60 * 1000);
+
+        if (isStale && isNotRunning) {
+            console.log('Manual crawl triggered via ping: Stale');
+            runManualCrawl();
+            triggered = true;
+        } else if (lastFailed && failedTenMinsAgo && isNotRunning) {
+            console.log('Manual crawl triggered via ping: Last Failed');
+            runManualCrawl();
             triggered = true;
         }
 
