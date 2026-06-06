@@ -1,13 +1,11 @@
 services:
   - type: web
     name: dealsniper-server
-    env: node
+    env: docker
     region: ohio
     plan: free
-    buildCommand: ./build.sh
-    startCommand: cd server && npm start
     envVars:
-      - key: NODE_VERSION
-        value: 20
-      - key: PLAYWRIGHT_BROWSERS_PATH
-        value: 0
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000

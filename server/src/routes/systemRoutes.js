@@ -7,6 +7,9 @@ const mongoose = require('mongoose');
 const TelegramService = require('../services/telegram');
 const ProductMonitor = require('../services/monitor');
 const MyntraScraper = require('../services/scraper');
+const ProxyManager = require('../services/proxyManager');
+const { chromium } = require('playwright');
+const fs = require('fs');
 
 const BRANDS_TO_TRACK = [
   'H&M', 'Levis', 'RARE RABBIT', 'U.S. Polo Assn.', 'Van Heusen',
@@ -44,6 +47,50 @@ router.get('/health', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
+// Detailed Scraper Health
+router.get('/scraper-health', async (req, res) => {
+    try {
+        const status = await SystemStatus.findOne({ key: 'main_status' });
+        
+        // Check Browser Status
+        const exePath = chromium.executablePath();
+        const browserExists = fs.existsSync(exePath);
+        
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            crawler: {
+                isCrawling: status?.isCrawling,
+                currentBrand: status?.currentBrand,
+                lastCrawlEnd: status?.lastCrawlEnd,
+                lastCrawlSuccess: status?.lastCrawlSuccess,
+                brandsCompleted: status?.brandsCompleted?.length || 0,
+                lastCrawlStats: {
+                    items: status?.lastCrawlProductsCount,
+                    new: status?.lastCrawlNewProducts,
+                    updated: status?.lastCrawlUpdatedProducts
+                }
+            },
+            playwright: {
+                executablePath: exePath,
+                existsOnDisk: browserExists,
+                version: require('playwright/package.json').version
+            },
+            proxy: {
+                mode: ProxyManager.getMode(),
+                isEnabled: ProxyManager.isEnabled()
+            },
+            system: {
+                memory: process.memoryUsage(),
+                uptime: process.uptime(),
+                nodeVersion: process.version
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
 });
 
 // Ping endpoint to keep server alive and trigger cron if missed
@@ -109,7 +156,7 @@ async function runManualCrawl() {
         status.currentBrand = brand;
         await status.save();
         
-        const data = await MyntraScraper.scrapeBrands([brand], 10); // Even lighter for manual trigger
+        const data = await MyntraScraper.scrapeProducts([brand], 10); // Even lighter for manual trigger
         const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
         
         status.lastCrawlProductsCount += data.length;

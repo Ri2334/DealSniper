@@ -1,170 +1,316 @@
 const axios = require('axios');
+const { chromium } = require('playwright');
+const ProxyManager = require('./proxyManager');
+const StealthUtils = require('../utils/stealth');
 
-class MyntraScraper {
-  static async getSessionCookies() {
-    try {
-      const response = await axios.get('https://www.myntra.com/', {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-          'Accept-Language': 'en-IN,en;q=0.9,hi-IN;q=0.8',
-        },
-        timeout: 10000
-      });
-      return response.headers['set-cookie'] || [];
-    } catch (error) {
-      console.error('[SESSION_ERROR] Failed to get initial cookies:', error.message);
-      return [];
+const ScraperAdapter = require('./scraperAdapter');
+
+class MyntraScraper extends ScraperAdapter {
+    constructor() {
+        super('Myntra');
+        this.strategies = ['GATEWAY_API', 'PLAYWRIGHT', 'HTML_SCRAPE'];
     }
-  }
 
-  static async scrapeBrands(brands = ['H&M'], maxPages = 100) {
-    let allProducts = [];
-    const cookies = await this.getSessionCookies();
-    const cookieHeader = cookies.map(c => c.split(';')[0]).join('; ');
-
-    for (const brand of brands) {
-      const encodedBrand = encodeURIComponent(brand);
-      
-      // Precise Slug Generation
-      let slug = brand.toLowerCase()
-        .replace(/h&m/g, 'h-m')
-        .replace(/&/g, '-')
-        .replace(/\s+/g, '-')
-        .replace(/\./g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+    /**
+     * Main entry point for scraping brands
+     */
+    async scrapeProducts(brands = ['H&M'], maxPages = 5) {
+        let allProducts = [];
+        const startTime = Date.now();
         
-      if (brand === 'RARE RABBIT') slug = 'rare-rabbit';
-      if (brand === 'Levis') slug = 'levis';
-      if (brand === 'U.S. Polo Assn.') slug = 'us-polo-assn';
-      
-      console.log(`[CRAWL_START] Brand: ${brand} (Slug: ${slug})`);
+        for (const brand of brands) {
+            console.log(`[MYNTRA] Starting brand: ${brand}`);
+            const brandProducts = await this.scrapeWithResilience(brand, maxPages);
+            allProducts = [...allProducts, ...brandProducts];
+        }
 
-      let currentPage = 1;
-      let hasNextPage = true;
+        console.log(`[MYNTRA_SUMMARY] Scraped ${allProducts.length} total products in ${(Date.now() - startTime) / 1000}s`);
+        return allProducts;
+    }
 
-      while (hasNextPage && currentPage <= maxPages) {
-        // Use the 'listing' gateway endpoint which is more robust
-        const apiUrl = `https://www.myntra.com/gateway/v2/search/${slug}?p=${currentPage}&rows=50&f=Brand%3A${encodedBrand}&sort=new`;
-        const webUrl = `https://www.myntra.com/${slug}?f=Brand%3A${encodedBrand}&p=${currentPage}`;
+    async healthCheck() {
+        try {
+            const products = await this.scrapeViaGateway('H&M', 'h-m', 1);
+            return { status: 'healthy', productsFound: products.length };
+        } catch (e) {
+            return { status: 'degraded', error: e.message };
+        }
+    }
+
+    /**
+     * Orchestrates multiple strategies for a single brand
+     */
+    async scrapeWithResilience(brand, maxPages) {
+        const slug = this.generateSlug(brand);
         
-        console.log(`[SCRAPE_ATTEMPT] ${brand} P${currentPage} -> ${apiUrl}`);
+        for (const strategy of this.strategies) {
+            console.log(`[SCRAPER] [${brand}] Attempting strategy: ${strategy}`);
+            
+            let retries = 2;
+            while (retries > 0) {
+                try {
+                    const strategyStartTime = Date.now();
+                    let products = [];
+                    
+                    if (strategy === 'GATEWAY_API') {
+                        products = await this.scrapeViaGateway(brand, slug, maxPages);
+                    } else if (strategy === 'PLAYWRIGHT') {
+                        products = await this.scrapeViaPlaywright(brand, slug, maxPages);
+                    } else if (strategy === 'HTML_SCRAPE') {
+                        products = await this.scrapeViaHtml(brand, slug, maxPages);
+                    }
 
-        let retries = 2;
-        let success = false;
-
-        while (retries > 0 && !success) {
-          try {
-            const response = await axios.get(apiUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
-                'Accept': 'application/json',
-                'Accept-Language': 'en-IN,en;q=0.9,hi-IN;q=0.8',
-                'Cookie': cookieHeader,
-                'Referer': `https://www.myntra.com/${slug}`,
-                'X-Requested-With': 'XMLHttpRequest'
-              },
-              timeout: 15000
-            });
-
-            const results = response.data?.searchData?.results;
-
-            if (results?.products && results.products.length > 0) {
-              const formattedProducts = results.products.map(item => ({
-                  productId: String(item.productId),
-                  brand: item.brand || brand,
-                  name: item.productName || item.product || '',
-                  url: `https://www.myntra.com/${item.landingPageUrl}`,
-                  image: item.searchImage || '',
-                  mrp: item.mrp || 0,
-                  currentPrice: item.price || 0,
-                  discountPercent: item.mrp > 0 ? Math.round(((item.mrp - item.price) / item.mrp) * 100) : 0,
-                  category: item.category || 'Fashion',
-                  availability: true,
-                  lastUpdated: new Date()
-              }));
-
-              const newProducts = formattedProducts.filter(
-                newProd => !allProducts.some(existingProd => existingProd.productId === newProd.productId)
-              );
-
-              allProducts = [...allProducts, ...newProducts];
-              console.log(`[API_SUCCESS] ${brand} P${currentPage}: ${newProducts.length} new items.`);
-              
-              hasNextPage = results.hasNextPage === true;
-              currentPage++;
-              success = true;
-            } else {
-              throw new Error('EMPTY_RESULTS');
+                    if (products && products.length > 0) {
+                        console.log(`[SCRAPER_SUCCESS] [${brand}] Strategy ${strategy} found ${products.length} items in ${(Date.now() - strategyStartTime) / 1000}s`);
+                        return products;
+                    } else {
+                        console.warn(`[SCRAPER_EMPTY] [${brand}] Strategy ${strategy} returned 0 items.`);
+                        break; // Move to next strategy, don't retry if it explicitly returned 0
+                    }
+                } catch (error) {
+                    retries--;
+                    const isTimeout = error.code === 'ECONNABORTED' || error.message.includes('timeout');
+                    console.error(`[SCRAPER_FAIL] [${brand}] Strategy ${strategy} failed (Retries left: ${retries}): ${error.message} ${isTimeout ? '(TIMEOUT)' : ''}`);
+                    
+                    if (retries > 0) {
+                        await StealthUtils.jitter(5000, 10000); // Wait longer before retry
+                    }
+                }
             }
-          } catch (error) {
-            console.warn(`[API_FAIL] ${brand} P${currentPage}: ${error.message}. Trying HTML Fallback...`);
+        }
+
+        console.error(`[SCRAPER_FATAL] [${brand}] All strategies exhausted.`);
+        return [];
+    }
+
+    /**
+     * LAYER 2: Gateway API
+     */
+    async scrapeViaGateway(brand, slug, maxPages) {
+        let products = [];
+        const axiosConfig = ProxyManager.getAxiosConfig() || {};
+        
+        for (let p = 1; p <= maxPages; p++) {
+            const pageStartTime = Date.now();
+            const url = `https://www.myntra.com/gateway/v2/search/${slug}?p=${p}&rows=50&f=Brand%3A${encodeURIComponent(brand)}&sort=new`;
             
             try {
-              const htmlResponse = await axios.get(webUrl, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                  'Accept-Language': 'en-IN,en;q=0.9',
-                  'Cookie': cookieHeader,
-                  'Referer': 'https://www.google.com/'
-                },
-                timeout: 15000
-              });
+                const response = await axios.get(url, {
+                    ...axiosConfig,
+                    headers: StealthUtils.getHeaders({
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Referer': `https://www.myntra.com/${slug}`
+                    }),
+                    timeout: 25000 // Increased timeout for Railway
+                });
 
-              const data = htmlResponse.data;
-              const markerRegex = /window\.__myx(_data)?\s*=\s*/;
-              const match = data.match(markerRegex);
-              
-              if (match) {
-                let jsonString = data.substring(match.index + match[0].length);
-                const endIndex = jsonString.indexOf('</script>');
-                jsonString = jsonString.substring(0, endIndex).trim();
-                if (jsonString.endsWith(';')) jsonString = jsonString.slice(0, -1);
-                
-                const myx = JSON.parse(jsonString);
-                const results = myx?.searchData?.results;
-                
-                if (results?.products && results.products.length > 0) {
-                   const formatted = results.products.map(item => ({
-                     productId: String(item.productId),
-                     brand: item.brand || brand,
-                     name: item.productName || item.product || '',
-                     url: `https://www.myntra.com/${item.landingPageUrl}`,
-                     image: item.searchImage || '',
-                     mrp: item.mrp || 0,
-                     currentPrice: item.price || 0,
-                     discountPercent: item.mrp > 0 ? Math.round(((item.mrp - item.price) / item.mrp) * 100) : 0,
-                     category: item.category || 'Fashion',
-                     availability: true,
-                     lastUpdated: new Date()
-                   }));
-                   allProducts = [...allProducts, ...formatted];
-                   console.log(`[HTML_SUCCESS] ${brand} P${currentPage}: ${formatted.length} items.`);
-                   hasNextPage = results.hasNextPage === true;
-                   currentPage++;
-                   success = true;
-                   break;
+                console.log(`[GATEWAY_RESPONSE] [${brand}] Page ${p} Status: ${response.status}`);
+
+                const results = response.data?.searchData?.results?.products;
+                if (results && results.length > 0) {
+                    const formatted = this.formatProducts(results, brand);
+                    products = [...products, ...formatted];
+                    console.log(`[GATEWAY_EXTRACT] [${brand}] Page ${p}: Extracted ${formatted.length} items in ${(Date.now() - pageStartTime) / 1000}s`);
+                    
+                    if (!response.data.searchData.results.hasNextPage) break;
+                } else {
+                    console.warn(`[GATEWAY_NO_DATA] [${brand}] Page ${p}: searchData.results.products is empty or missing`);
+                    break;
                 }
-              } else {
-                 const title = data.match(/<title>(.*?)<\/title>/)?.[1] || 'Unknown';
-                 console.error(`[HTML_BLOCK] ${brand} P${currentPage}: Title: ${title}`);
-              }
-            } catch (htmlErr) {
-              console.error(`[CRITICAL_FAIL] ${brand} P${currentPage}: ${htmlErr.message}`);
+                
+                await StealthUtils.jitter(2000, 4000);
+            } catch (error) {
+                const status = error.response?.status;
+                const htmlSnippet = error.response?.data ? String(error.response.data).substring(0, 500).replace(/\s+/g, ' ') : 'N/A';
+                console.error(`[GATEWAY_ERROR] [${brand}] Page ${p} Status: ${status || 'TIMEOUT'}. Snippet: ${htmlSnippet}`);
+                
+                const block = StealthUtils.detectBlock(error.response?.data, status);
+                if (block) throw new Error(`BLOCKED_BY_${block}`);
+                throw error;
             }
-
-            retries--;
-            if (retries > 0) await new Promise(r => setTimeout(r, 5000));
-          }
         }
-        
-        await new Promise(r => setTimeout(r, 2000 + Math.random() * 3000));
-      }
+        return products;
     }
-    return allProducts;
-  }
+
+    /**
+     * LAYER 3: Playwright Browser Automation
+     */
+    async scrapeViaPlaywright(brand, slug, maxPages) {
+        let products = [];
+        let browser;
+
+        try {
+            const proxy = ProxyManager.getPlaywrightConfig();
+            console.log(`[PLAYWRIGHT_START] [${brand}] Launching browser... Proxy: ${proxy ? 'YES' : 'NO'}`);
+            
+            browser = await chromium.launch({
+                headless: true,
+                proxy: proxy || undefined,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            });
+
+            const context = await browser.newContext({
+                userAgent: StealthUtils.getUserAgent(),
+                viewport: { width: 1280, height: 1000 }
+            });
+
+            const page = await context.newPage();
+            
+            for (let p = 1; p <= maxPages; p++) {
+                const pageStartTime = Date.now();
+                const url = `https://www.myntra.com/${slug}?f=Brand%3A${encodeURIComponent(brand)}&p=${p}&sort=new`;
+                
+                console.log(`[PLAYWRIGHT_NAV] [${brand}] Page ${p} -> ${url}`);
+                await page.goto(url, { waitUntil: 'networkidle', timeout: 75000 });
+                
+                // Extract data from window.__myx
+                const myxData = await page.evaluate(() => {
+                    return window.__myx || window.__myx_data;
+                });
+
+                if (myxData?.searchData?.results?.products) {
+                    const pageProducts = myxData.searchData.results.products;
+                    const formatted = this.formatProducts(pageProducts, brand);
+                    products = [...products, ...formatted];
+                    console.log(`[PLAYWRIGHT_EXTRACT] [${brand}] Page ${p}: Found ${formatted.length} items in ${(Date.now() - pageStartTime) / 1000}s`);
+                    
+                    if (!myxData.searchData.results.hasNextPage) break;
+                } else {
+                    console.log(`[PLAYWRIGHT_FALLBACK] [${brand}] Page ${p}: __myx missing, attempting DOM scrape...`);
+                    const domProducts = await this.scrapeDOM(page);
+                    if (domProducts.length > 0) {
+                        const formatted = this.formatProducts(domProducts, brand);
+                        products = [...products, ...formatted];
+                        console.log(`[PLAYWRIGHT_DOM_EXTRACT] [${brand}] Page ${p}: Found ${formatted.length} items`);
+                    } else {
+                        console.warn(`[PLAYWRIGHT_NO_DATA] [${brand}] Page ${p}: No products in __myx or DOM`);
+                        break;
+                    }
+                }
+
+                await StealthUtils.jitter(3000, 6000);
+            }
+        } catch (error) {
+            console.error(`[PLAYWRIGHT_ERROR] [${brand}] ${error.message}`);
+            throw error;
+        } finally {
+            if (browser) await browser.close();
+        }
+
+        return products;
+    }
+
+    /**
+     * LAYER 4: Fallback HTML Scrape
+     */
+    async scrapeViaHtml(brand, slug, maxPages) {
+        let products = [];
+        const axiosConfig = ProxyManager.getAxiosConfig() || {};
+        console.log(`[HTML_START] [${brand}] Starting fallback HTML scrape...`);
+
+        for (let p = 1; p <= maxPages; p++) {
+            const pageStartTime = Date.now();
+            const url = `https://www.myntra.com/${slug}?f=Brand%3A${encodeURIComponent(brand)}&p=${p}&sort=new`;
+            
+            try {
+                const response = await axios.get(url, {
+                    ...axiosConfig,
+                    headers: StealthUtils.getHeaders({
+                        'Referer': 'https://www.google.com/'
+                    }),
+                    timeout: 30000
+                });
+
+                console.log(`[HTML_RESPONSE] [${brand}] Page ${p} Status: ${response.status}`);
+                const html = response.data;
+                
+                // More resilient regex to find __myx
+                const match = html.match(/window\.__myx(_data)?\s*=\s*({.*?})[\s;]*<\/script>/);
+                
+                if (match && match[2]) {
+                    const myx = JSON.parse(match[2]);
+                    const results = myx?.searchData?.results?.products;
+                    if (results && results.length > 0) {
+                        const formatted = this.formatProducts(results, brand);
+                        products = [...products, ...formatted];
+                        console.log(`[HTML_EXTRACT] [${brand}] Page ${p}: Extracted ${formatted.length} items in ${(Date.now() - pageStartTime) / 1000}s`);
+                        
+                        if (!myx.searchData.results.hasNextPage) break;
+                    } else {
+                        console.warn(`[HTML_NO_RESULTS] [${brand}] Page ${p}: __myx found but products array is empty`);
+                        break;
+                    }
+                } else {
+                    const block = StealthUtils.detectBlock(html, response.status);
+                    console.warn(`[HTML_PARSE_FAIL] [${brand}] Page ${p}: Could not find __myx marker. Block detected: ${block || 'NONE'}`);
+                    if (block) throw new Error(`BLOCKED_BY_${block}`);
+                    break;
+                }
+
+                await StealthUtils.jitter(2000, 5000);
+            } catch (error) {
+                console.error(`[HTML_ERROR] [${brand}] Page ${p}: ${error.message}`);
+                throw error;
+            }
+        }
+        return products;
+    }
+
+    /**
+     * Helpers
+     */
+    generateSlug(brand) {
+        if (brand === 'RARE RABBIT') return 'rare-rabbit';
+        if (brand === 'Levis') return 'levis';
+        if (brand === 'U.S. Polo Assn.') return 'us-polo-assn';
+        
+        return brand.toLowerCase()
+            .replace(/h&m/g, 'h-m')
+            .replace(/&/g, '-')
+            .replace(/\s+/g, '-')
+            .replace(/\./g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
+    formatProducts(items, brand) {
+        return items.map(item => ({
+            productId: String(item.productId),
+            brand: item.brand || brand,
+            name: item.productName || item.product || '',
+            url: `https://www.myntra.com/${item.landingPageUrl}`,
+            image: item.searchImage || '',
+            mrp: item.mrp || 0,
+            currentPrice: item.price || 0,
+            discountPercent: item.mrp > 0 ? Math.round(((item.mrp - item.price) / item.mrp) * 100) : 0,
+            category: item.category || 'Fashion',
+            availability: true,
+            lastUpdated: new Date()
+        }));
+    }
+
+    async scrapeDOM(page) {
+        // Basic DOM selector for Myntra products if JSON fails
+        return await page.evaluate(() => {
+            const items = [];
+            document.querySelectorAll('.product-base').forEach(el => {
+                const link = el.querySelector('a')?.getAttribute('href');
+                const id = link?.match(/\/(\d+)\/buy/)?.[1];
+                if (id) {
+                    items.push({
+                        productId: id,
+                        productName: el.querySelector('.product-product')?.innerText,
+                        brand: el.querySelector('.product-brand')?.innerText,
+                        landingPageUrl: link,
+                        price: parseInt(el.querySelector('.product-discountedPrice')?.innerText.replace(/[^\d]/g, '')),
+                        mrp: parseInt(el.querySelector('.product-strike')?.innerText.replace(/[^\d]/g, '')),
+                    });
+                }
+            });
+            return items;
+        });
+    }
 }
 
-module.exports = MyntraScraper;
+module.exports = new MyntraScraper();

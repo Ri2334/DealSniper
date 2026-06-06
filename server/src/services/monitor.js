@@ -35,6 +35,9 @@ class ProductMonitor {
   static async processFetchedProducts(scrapedProducts) {
     let newProducts = 0;
     let updatedProducts = 0;
+    const startTime = Date.now();
+
+    console.log(`[MONITOR_START] Processing ${scrapedProducts.length} items...`);
 
     for (const item of scrapedProducts) {
       try {
@@ -53,7 +56,6 @@ class ProductMonitor {
 
         if (!product) {
           // New product
-          newProducts++;
           item.lowestPrice = item.currentPrice;
           item.highestPrice = item.currentPrice;
           
@@ -63,21 +65,29 @@ class ProductMonitor {
           
           product = await Product.create(item);
           await PriceHistory.create({ productId: product.productId, price: product.currentPrice });
+          
+          newProducts++;
+          console.log(`[DB_CREATE] [${item.brand}] New product: ${item.productId} (₹${item.currentPrice})`);
         } else {
           previousPrice = product.currentPrice;
           
           let hasChanged = false;
+          let changeType = '';
+
           if (product.currentPrice !== item.currentPrice || product.discountPercent !== item.discountPercent) {
-            updatedProducts++;
             // Calculate True Price Drop
             if (product.currentPrice > item.currentPrice) {
                const drop = ((product.currentPrice - item.currentPrice) / product.currentPrice) * 100;
                product.lastPrice = product.currentPrice;
                product.dropPercentage = Math.round(drop);
                product.lastDropDate = new Date();
+               changeType = 'PRICE_DROP';
             } else if (product.currentPrice < item.currentPrice) {
                product.lastPrice = product.currentPrice;
                product.dropPercentage = 0;
+               changeType = 'PRICE_INCREASE';
+            } else {
+               changeType = 'DISCOUNT_CHANGE';
             }
 
             product.currentPrice = item.currentPrice;
@@ -100,14 +110,16 @@ class ProductMonitor {
           product.dealScore = score;
           product.category = item.category; // Update category if it improved
 
-          // Update existing product if price or discount changed
-          if (hasChanged || product.isModified('dealScore')) {
-            product.lastUpdated = Date.now();
-            await product.save();
+          // ALWAYS update lastUpdated and save to signal "Last Seen"
+          product.lastUpdated = Date.now();
+          await product.save();
 
-            if (hasChanged) {
-              await PriceHistory.create({ productId: product.productId, price: product.currentPrice });
-            }
+          if (hasChanged) {
+            await PriceHistory.create({ productId: product.productId, price: product.currentPrice });
+            updatedProducts++;
+            console.log(`[DB_UPDATE] [${item.brand}] ${item.productId}: ${changeType} (₹${previousPrice} -> ₹${item.currentPrice})`);
+          } else {
+            console.log(`[DB_SEEN] [${item.brand}] ${item.productId}: Still ₹${item.currentPrice}. Deal Score: ${score}`);
           }
         }
 
@@ -140,6 +152,7 @@ class ProductMonitor {
           }
 
           if (shouldAlert) {
+            console.log(`[ALERT_TRIGGER] [${product.brand}] ${product.productId} Score: ${score}, Drop: ${dropPercent}%`);
             await TelegramService.sendDealAlert(product, dropPercent, score, previousPrice, isLowestPrice);
             await Alert.create({
               productId: product.productId,
@@ -150,10 +163,11 @@ class ProductMonitor {
           }
         }
       } catch (err) {
-        console.error(`Error processing product ${item.productId}:`, err.message);
+        console.error(`[MONITOR_ERROR] [${item.productId}] ${err.message}`);
       }
     }
 
+    console.log(`[MONITOR_FINISH] Processed ${scrapedProducts.length} items in ${(Date.now() - startTime) / 1000}s. New: ${newProducts}, Updated: ${updatedProducts}`);
     return { newProducts, updatedProducts };
   }
 }

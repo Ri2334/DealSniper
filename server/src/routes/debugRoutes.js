@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const { chromium } = require('playwright');
+const path = require('path');
+const fs = require('fs');
 
 router.get('/myntra', async (req, res) => {
     const targetUrl = req.query.url || 'https://www.myntra.com/h-m?f=Brand%3AH%26M';
@@ -155,37 +157,80 @@ router.get('/playwright-status', async (req, res) => {
             HOME: process.env.HOME,
             PWD: process.env.PWD
         },
-        playwrightVersion: require('playwright/package.json').version,
-        executablePath: chromium.executablePath(),
+        playwrightVersion: 'unknown',
+        executablePath: 'unknown',
         existsOnDisk: false,
         launchSucceeds: false,
-        lsCache: [],
-        lsLocal: [],
+        lsCache: {},
+        lsLocal: {},
         error: null
     };
 
     try {
-        const fs = require('fs');
-        results.existsOnDisk = fs.existsSync(results.executablePath);
+        // Try to get version and path safely
+        try {
+            results.playwrightVersion = require('playwright/package.json').version;
+            results.executablePath = chromium.executablePath();
+        } catch (e) {
+            results.error = `Playwright load error: ${e.message}`;
+        }
+
+        if (results.executablePath !== 'unknown') {
+            results.existsOnDisk = fs.existsSync(results.executablePath);
+        }
         
         // Manual scan of common locations
-        const cachePath = '/opt/render/.cache/ms-playwright';
-        if (fs.existsSync(cachePath)) {
-            results.lsCache = fs.readdirSync(cachePath);
+        const cachePaths = [
+            '/opt/render/.cache/ms-playwright',
+            path.join(process.env.HOME || '/home/render', '.cache/ms-playwright'),
+            path.join(__dirname, '../../node_modules/playwright-core/.local-browsers'),
+            path.join(__dirname, '../../../node_modules/playwright-core/.local-browsers'),
+            '/root/.cache/ms-playwright'
+        ];
+
+        for (const p of cachePaths) {
+            try {
+                if (fs.existsSync(p)) {
+                    results.lsCache[p] = fs.readdirSync(p);
+                } else {
+                    results.lsCache[p] = 'Not Found';
+                }
+            } catch (e) {
+                results.lsCache[p] = `Error: ${e.message}`;
+            }
         }
 
-        const localPath = path.join(__dirname, '../../node_modules/playwright-core/.local-browsers');
-        if (fs.existsSync(localPath)) {
-            results.lsLocal = fs.readdirSync(localPath);
+        // Scan local node_modules
+        const localPaths = [
+            path.join(process.cwd(), 'node_modules/playwright-core'),
+            path.join(process.cwd(), 'node_modules/playwright'),
+            path.join(process.cwd(), '../node_modules/playwright-core'),
+            path.join(process.cwd(), '../node_modules/playwright'),
+            '/opt/render/project/src/node_modules/playwright-core',
+            '/opt/render/project/src/server/node_modules/playwright-core'
+        ];
+
+        for (const p of localPaths) {
+            try {
+                if (fs.existsSync(p)) {
+                    results.lsLocal[p] = fs.readdirSync(p);
+                }
+            } catch (e) {
+                results.lsLocal[p] = `Error: ${e.message}`;
+            }
         }
 
-        const browser = await chromium.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-        });
-        results.launchSucceeds = true;
-        await browser.close();
+        if (results.existsOnDisk) {
+            const browser = await chromium.launch({
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            });
+            results.launchSucceeds = true;
+            await browser.close();
+        } else if (!results.error) {
+            results.error = `Executable not found at ${results.executablePath}`;
+        }
     } catch (error) {
-        results.error = error.message;
+        results.error = results.error ? `${results.error} | ${error.message}` : error.message;
     }
 
     res.json({ success: true, results });

@@ -163,6 +163,25 @@ _Intelligence Engine v3.0_
       );
     }
   }
+
+  static async sendSystemAlert(title, message) {
+    if (!process.env.TELEGRAM_BOT_TOKEN || !channelId) return;
+
+    const alertMessage = `
+⚠️ *SYSTEM ALERT*
+
+*${title}*
+${message}
+
+_Timestamp: ${new Date().toISOString()}_
+    `;
+
+    try {
+      await bot.telegram.sendMessage(channelId, alertMessage, { parse_mode: 'Markdown' });
+    } catch (error) {
+      console.error(`Failed to send Telegram system alert: ${error.message}`);
+    }
+  }
 }
 
 let isBotLaunched = false;
@@ -176,6 +195,8 @@ const launchBot = (delayMs = 5000) => {
         .then(() => {
           isBotLaunched = true;
           console.log('Telegram Bot Polling started.');
+          // Notify on restart
+          TelegramService.sendSystemAlert('Backend Restarted', 'The DealSniper server has been restarted and bot is active.');
         })
         .catch(err => {
           if (err.response && err.response.error_code === 409) {
@@ -195,5 +216,6 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 module.exports = { 
   sendDealAlert: TelegramService.sendDealAlert, 
+  sendSystemAlert: TelegramService.sendSystemAlert,
   launchBot 
 };

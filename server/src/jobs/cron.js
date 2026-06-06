@@ -54,27 +54,49 @@ const initCronJobs = () => {
     await status.save();
 
     try {
+      const results = {
+        totalProducts: 0,
+        totalNew: 0,
+        totalUpdated: 0,
+        failedBrands: []
+      };
+
       for (const brand of BRANDS_TO_TRACK) {
         status.currentBrand = brand;
         await status.save();
 
-        console.log(`[${new Date().toISOString()}] Scraping brand: ${brand}`);
-        const data = await MyntraScraper.scrapeBrands([brand], 20); // 20 pages per brand
+        try {
+            console.log(`[CRON] [${new Date().toISOString()}] Scraping: ${brand}`);
+            const data = await MyntraScraper.scrapeProducts([brand], 10); // 10 pages per brand for faster cycles
+            
+            if (data.length > 0) {
+                console.log(`[CRON] Processing ${data.length} products for ${brand}`);
+                const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
+                
+                results.totalProducts += data.length;
+                results.totalNew += newProducts;
+                results.totalUpdated += updatedProducts;
+                status.brandsCompleted.push(brand);
+            } else {
+                console.warn(`[CRON] No products found for ${brand}`);
+                results.failedBrands.push(brand);
+            }
+        } catch (brandError) {
+            console.error(`[CRON] Failed to scrape ${brand}:`, brandError.message);
+            results.failedBrands.push(brand);
+        }
         
-        console.log(`[${new Date().toISOString()}] Processing ${data.length} products for ${brand}`);
-        const { newProducts, updatedProducts } = await ProductMonitor.processFetchedProducts(data);
-        
-        status.lastCrawlProductsCount += data.length;
-        status.lastCrawlNewProducts += newProducts;
-        status.lastCrawlUpdatedProducts += updatedProducts;
-        status.brandsCompleted.push(brand);
         await status.save();
       }
 
       status.lastCrawlEnd = new Date();
-      status.lastCrawlSuccess = true;
-      status.lastError = null;
-      console.log(`[${new Date().toISOString()}] Cron cycle completed successfully.`);
+      status.lastCrawlSuccess = results.failedBrands.length < BRANDS_TO_TRACK.length;
+      status.lastCrawlProductsCount = results.totalProducts;
+      status.lastCrawlNewProducts = results.totalNew;
+      status.lastCrawlUpdatedProducts = results.totalUpdated;
+      status.lastError = results.failedBrands.length > 0 ? `Failed brands: ${results.failedBrands.join(', ')}` : null;
+      
+      console.log(`[CRON] Cycle completed. Success: ${status.lastCrawlSuccess}, Items: ${results.totalProducts}`);
     } catch (error) {
       console.error(`[${new Date().toISOString()}] Error in cron job:`, error.message);
       status.lastCrawlEnd = new Date();

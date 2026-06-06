@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "verify-playwright": "node src/utils/startup-verify.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -24,7 +25,8 @@
     "morgan": "^1.11.0",
     "node-cron": "^4.2.1",
     "playwright": "^1.60.0",
-    "telegraf": "^4.16.3"
+    "telegraf": "^4.16.3",
+    "user-agents": "^2.1.83"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
