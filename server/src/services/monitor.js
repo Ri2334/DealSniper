@@ -110,9 +110,14 @@ class ProductMonitor {
           product.dealScore = score;
           product.category = item.category; // Update category if it improved
 
-          // ALWAYS update lastUpdated and save to signal "Last Seen"
-          product.lastUpdated = Date.now();
+          // ALWAYS update lastUpdated to signal "Last Seen"
+          product.lastUpdated = new Date();
+          
+          // Force Mongoose to recognize a change even if values look identical
+          product.markModified('lastUpdated');
+
           await product.save();
+          console.log(`[DB_SAVE_SUCCESS] [${item.brand}] ${item.productId} persisted.`);
 
           if (hasChanged) {
             await PriceHistory.create({ productId: product.productId, price: product.currentPrice });
@@ -125,12 +130,6 @@ class ProductMonitor {
 
         // Evaluate deal for alerting
         const { isDeal, dropPercent, score, isLowestPrice } = DealEngine.evaluateDeal(product, previousPrice);
-
-        // Update product with new intelligence metrics
-        product.dealScore = score;
-        if (product.isModified()) {
-             await product.save();
-        }
 
         // Telegram alert rule: Significant Score or Big Drop or True Lowest Ever
         const isTrueLowest = isLowestPrice && previousPrice !== null && product.currentPrice < product.lowestPrice;
