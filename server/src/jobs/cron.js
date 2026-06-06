@@ -11,8 +11,7 @@ const BRANDS_TO_TRACK = [
 ];
 
 const initCronJobs = () => {
-  // Run every 30 minutes
-  cron.schedule('*/30 * * * *', async () => {
+  const runJob = async () => {
     console.log(`[${new Date().toISOString()}] Starting cron cycle...`);
     
     const startTime = new Date();
@@ -26,7 +25,7 @@ const initCronJobs = () => {
 
     try {
       console.log(`[${new Date().toISOString()}] Scraper started for ${BRANDS_TO_TRACK.length} brands...`);
-      const data = await MyntraScraper.scrapeBrands(BRANDS_TO_TRACK, 50); // Reduced pages slightly for reliability
+      const data = await MyntraScraper.scrapeBrands(BRANDS_TO_TRACK, 50); 
       console.log(`[${new Date().toISOString()}] Scraper finished. Found ${data.length} products.`);
       
       console.log(`[${new Date().toISOString()}] Processing products...`);
@@ -49,7 +48,14 @@ const initCronJobs = () => {
       status.lastError = error.message;
       await status.save();
     }
-  });
+  };
+
+  // Run every 30 minutes
+  cron.schedule('*/30 * * * *', runJob);
+  
+  // Also run once on startup
+  console.log('Initial cron job triggered on startup.');
+  runJob();
 };
 
 module.exports = initCronJobs;
