@@ -61,8 +61,12 @@ router.get('/ping', async (req, res) => {
         // 3. Last crawl failed and was more than 10 mins ago
         
         const isStale = !status?.lastCrawlStart || status.lastCrawlStart < thirtyMinutesAgo;
-        const isNotRunning = !status || (status.lastCrawlEnd && status.lastCrawlEnd >= status.lastCrawlStart);
-        const lastFailed = status && !status.lastCrawlSuccess;
+        // If end is undefined but start was > 45 mins ago, assume it crashed
+        const fortyFiveMinsAgo = new Date(now.getTime() - 45 * 60 * 1000);
+        const isCrashed = status?.lastCrawlStart && !status.lastCrawlEnd && status.lastCrawlStart < fortyFiveMinsAgo;
+        const isNotRunning = !status || (status.lastCrawlEnd && status.lastCrawlEnd >= status.lastCrawlStart) || isCrashed;
+        
+        const lastFailed = status && status.lastCrawlSuccess === false;
         const failedTenMinsAgo = status?.lastCrawlEnd && status.lastCrawlEnd < new Date(now.getTime() - 10 * 60 * 1000);
 
         if (isStale && isNotRunning) {

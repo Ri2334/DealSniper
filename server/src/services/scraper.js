@@ -35,22 +35,33 @@ class MyntraScraper {
             });
 
             const data = response.data;
+            const contentType = response.headers['content-type'];
+            const finalUrl = response.request.res.responseUrl || url;
+            const status = response.status;
 
             const markerRegex = /window\.__myx(_data)?\s*=\s*/;
             const match = data.match(markerRegex);
             
             if (!match) {
               const title = data.match(/<title>(.*?)<\/title>/)?.[1] || 'Unknown';
-              console.error(`[SCRAPE_FAILURE] Page ${currentPage}: Marker not found. Title: ${title}`);
-              console.error(`[SCRAPE_FAILURE] Status: ${response.status}`);
-              console.error(`[SCRAPE_FAILURE] Final URL: ${response.request.res.responseUrl || url}`);
-              console.error(`[SCRAPE_FAILURE] HTML SNIPPET (2000 chars): ${data.substring(0, 2000).replace(/\s+/g, ' ')}`);
+              console.error('--- [FORCE_DIAGNOSTICS_START] ---');
+              console.error(`Page ${currentPage}: Marker not found.`);
+              console.error(`Title: ${title}`);
+              console.error(`Status: ${status}`);
+              console.error(`URL: ${finalUrl}`);
+              console.error(`Content-Type: ${contentType}`);
               
-              if (data.includes('checking your browser') || data.includes('Access Denied') || data.includes('maintenance')) {
-                console.error('[SCRAPE_FAILURE] Detected WAF, Bot Check, or Maintenance page.');
+              if (data.includes('Cloudflare') || data.includes('Akamai') || data.includes('Access Denied') || data.includes('checking your browser') || data.toLowerCase().includes('maintenance')) {
+                console.error('[DETECTION] Bot Check or Maintenance detected!');
+                // Print verbatim snippet for analysis
+                console.error(`[VERBATIM] ${data.substring(0, 2000).replace(/\s+/g, ' ')}`);
+              } else {
+                console.error(`[BODY_SNIPPET] ${data.substring(0, 500).replace(/\s+/g, ' ')}`);
               }
+              console.error('--- [FORCE_DIAGNOSTICS_END] ---');
+              
               retries--;
-              await new Promise(r => setTimeout(r, 3000));
+              await new Promise(r => setTimeout(r, 5000)); // Longer wait on fail
               continue;
             }
 

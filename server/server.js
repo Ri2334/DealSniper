@@ -14,6 +14,7 @@ connectDB();
 initCronJobs();
 
 // Initialize Telegram Bot Subscriptions
+// Deployment Heartbeat: 2026-06-06 15:15
 launchBot();
 
 const app = express();

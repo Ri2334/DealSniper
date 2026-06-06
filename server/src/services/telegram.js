@@ -167,21 +167,25 @@ _Intelligence Engine v3.0_
 
 let isBotLaunched = false;
 
-const launchBot = () => {
+const launchBot = (delayMs = 5000) => {
   if (process.env.TELEGRAM_BOT_TOKEN && !isBotLaunched) {
-    bot.launch()
-      .then(() => {
-        isBotLaunched = true;
-        console.log('Telegram Bot Polling started.');
-      })
-      .catch(err => {
-        if (err.response && err.response.error_code === 409) {
-          console.warn('Telegram bot conflict (409). Likely another instance is running. Polling skipped for this process.');
-        } else {
-          console.error('Telegram bot failed to launch', err);
-        }
-        isBotLaunched = false;
-      });
+    console.log(`Telegram bot launch scheduled with ${delayMs}ms delay...`);
+    setTimeout(() => {
+      if (isBotLaunched) return;
+      bot.launch()
+        .then(() => {
+          isBotLaunched = true;
+          console.log('Telegram Bot Polling started.');
+        })
+        .catch(err => {
+          if (err.response && err.response.error_code === 409) {
+            console.warn('Telegram bot conflict (409). Another instance is likely polling. Skipping polling for this process.');
+          } else {
+            console.error('Telegram bot failed to launch', err);
+          }
+          isBotLaunched = false;
+        });
+    }, delayMs);
   }
 };
 
