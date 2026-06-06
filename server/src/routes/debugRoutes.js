@@ -150,10 +150,17 @@ router.get('/playwright', async (req, res) => {
 router.get('/playwright-status', async (req, res) => {
     const results = {
         timestamp: new Date().toISOString(),
+        env: {
+            PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH,
+            HOME: process.env.HOME,
+            PWD: process.env.PWD
+        },
         playwrightVersion: require('playwright/package.json').version,
         executablePath: chromium.executablePath(),
         existsOnDisk: false,
         launchSucceeds: false,
+        lsCache: [],
+        lsLocal: [],
         error: null
     };
 
@@ -161,8 +168,19 @@ router.get('/playwright-status', async (req, res) => {
         const fs = require('fs');
         results.existsOnDisk = fs.existsSync(results.executablePath);
         
+        // Manual scan of common locations
+        const cachePath = '/opt/render/.cache/ms-playwright';
+        if (fs.existsSync(cachePath)) {
+            results.lsCache = fs.readdirSync(cachePath);
+        }
+
+        const localPath = path.join(__dirname, '../../node_modules/playwright-core/.local-browsers');
+        if (fs.existsSync(localPath)) {
+            results.lsLocal = fs.readdirSync(localPath);
+        }
+
         const browser = await chromium.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         });
         results.launchSucceeds = true;
         await browser.close();

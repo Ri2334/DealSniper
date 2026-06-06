@@ -4,9 +4,8 @@ services:
     env: node
     region: ohio
     plan: free
-    rootDir: server
-    buildCommand: npm install && npx playwright install chromium
-    startCommand: npm start
+    buildCommand: ./build.sh
+    startCommand: cd server && npm start
     envVars:
       - key: NODE_VERSION
         value: 20

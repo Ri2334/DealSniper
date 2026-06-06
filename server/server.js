@@ -14,7 +14,7 @@ connectDB();
 initCronJobs();
 
 // Initialize Telegram Bot Subscriptions
-// Deployment Heartbeat: 2026-06-06 16:10 (Playwright Setup Fix)
+// Deployment Heartbeat: 2026-06-06 16:35 (Build Diagnostics)
 launchBot();
 
 const app = express();
