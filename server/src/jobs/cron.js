@@ -73,18 +73,16 @@ const initCronJobs = () => {
 
       status.lastCrawlEnd = new Date();
       status.lastCrawlSuccess = true;
-      status.isCrawling = false;
-      status.currentBrand = null;
       status.lastError = null;
-      await status.save();
-      
       console.log(`[${new Date().toISOString()}] Cron cycle completed successfully.`);
     } catch (error) {
       console.error(`[${new Date().toISOString()}] Error in cron job:`, error.message);
       status.lastCrawlEnd = new Date();
       status.lastCrawlSuccess = false;
-      status.isCrawling = false;
       status.lastError = error.message;
+    } finally {
+      status.isCrawling = false;
+      status.currentBrand = null;
       await status.save();
     }
   };
