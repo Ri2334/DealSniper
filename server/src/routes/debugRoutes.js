@@ -147,4 +147,30 @@ router.get('/playwright', async (req, res) => {
     }
 });
 
+router.get('/playwright-status', async (req, res) => {
+    const results = {
+        timestamp: new Date().toISOString(),
+        playwrightVersion: require('playwright/package.json').version,
+        executablePath: chromium.executablePath(),
+        existsOnDisk: false,
+        launchSucceeds: false,
+        error: null
+    };
+
+    try {
+        const fs = require('fs');
+        results.existsOnDisk = fs.existsSync(results.executablePath);
+        
+        const browser = await chromium.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        results.launchSucceeds = true;
+        await browser.close();
+    } catch (error) {
+        results.error = error.message;
+    }
+
+    res.json({ success: true, results });
+});
+
 module.exports = router;
