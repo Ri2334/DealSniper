@@ -74,6 +74,12 @@ class ProductMonitor {
           let hasChanged = false;
           let changeType = '';
 
+          // Update availability
+          if (product.availability !== item.availability) {
+            product.availability = item.availability;
+            hasChanged = true;
+          }
+
           if (product.currentPrice !== item.currentPrice || product.discountPercent !== item.discountPercent) {
             // Calculate True Price Drop
             if (product.currentPrice > item.currentPrice) {
@@ -152,6 +158,27 @@ class ProductMonitor {
 
           if (shouldAlert) {
             console.log(`[ALERT_TRIGGER] [${product.brand}] ${product.productId} Score: ${score}, Drop: ${dropPercent}%`);
+            await TelegramService.sendDealAlert(product, dropPercent, score, previousPrice, isLowestPrice);
+            await Alert.create({
+              productId: product.productId,
+              priceAtAlert: product.currentPrice,
+              discountAtAlert: product.discountPercent,
+              score
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`[MONITOR_ERROR] [${item.productId}] ${err.message}`);
+      }
+    }
+
+    console.log(`[MONITOR_FINISH] Processed ${scrapedProducts.length} items in ${(Date.now() - startTime) / 1000}s. New: ${newProducts}, Updated: ${updatedProducts}`);
+    return { newProducts, updatedProducts };
+  }
+}
+
+module.exports = ProductMonitor;
+          console.log(`[ALERT_TRIGGER] [${product.brand}] ${product.productId} Score: ${score}, Drop: ${dropPercent}%`);
             await TelegramService.sendDealAlert(product, dropPercent, score, previousPrice, isLowestPrice);
             await Alert.create({
               productId: product.productId,

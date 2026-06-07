@@ -82,43 +82,48 @@ exports.getProducts = async (req, res, next) => {
 
 exports.getDashboardAnalytics = async (req, res, next) => {
   try {
-    const totalProducts = await Product.countDocuments();
-    const activeDeals = await Product.countDocuments({ dealScore: { $gte: 70 } });
-    const alertsSent = await Alert.countDocuments();
-    
-    // Time ranges
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const totalProducts = await Product.countDocuments({ availability: true });
+    const activeDeals = await Product.countDocuments({ dealScore: { $gte: 70 }, availability: true });
+    const alertsSent = await Alert.countDocuments();
+    
+    // Time ranges
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
 
     // Top 10 Deals Today (by Deal Score)
     const topDealsToday = await Product.find({ 
       lastUpdated: { $gte: today },
-      dealScore: { $gt: 0 }
+      dealScore: { $gt: 0 },
+      availability: true
     }).sort({ dealScore: -1 }).limit(10);
 
     // Top 10 Deals This Week (by Deal Score)
     const topDealsWeek = await Product.find({ 
       lastUpdated: { $gte: lastWeek },
-      dealScore: { $gt: 0 }
+      dealScore: { $gt: 0 },
+      availability: true
     }).sort({ dealScore: -1 }).limit(10);
 
     // Top 10 Lowest Ever (hit lowest price recently, ranked by score)
     const topLowestEver = await Product.find({
       lastUpdated: { $gte: today },
-      $expr: { $lte: ["$currentPrice", "$lowestPrice"] }
+      $expr: { $lte: ["$currentPrice", "$lowestPrice"] },
+      availability: true
     }).sort({ dealScore: -1 }).limit(10);
 
     // Brand Breakdown
     const brandStats = await Product.aggregate([
+      { $match: { availability: true } },
       { $group: { _id: "$brand", count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]);
 
     // Category Breakdown
     const categoryStats = await Product.aggregate([
+      { $match: { availability: true } },
       { $group: { _id: "$category", count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]);

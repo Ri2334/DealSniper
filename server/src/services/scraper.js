@@ -344,19 +344,27 @@ class MyntraScraper extends ScraperAdapter {
     }
 
     formatProducts(items, brand) {
-        return items.map(item => ({
-            productId: String(item.productId),
-            brand: item.brand || brand,
-            name: item.productName || item.product || '',
-            url: `https://www.myntra.com/${item.landingPageUrl}`,
-            image: item.searchImage || '',
-            mrp: item.mrp || 0,
-            currentPrice: item.price || 0,
-            discountPercent: item.mrp > 0 ? Math.round(((item.mrp - item.price) / item.mrp) * 100) : 0,
-            category: item.category || 'Fashion',
-            availability: true,
-            lastUpdated: new Date()
-        }));
+        return items.map(item => {
+            // Myntra availability logic
+            let isAvailable = true;
+            if (item.inventory === 0 || item.outOfStock === true || item.available === false) {
+                isAvailable = false;
+            }
+
+            return {
+                productId: String(item.productId),
+                brand: item.brand || brand,
+                name: item.productName || item.product || '',
+                url: `https://www.myntra.com/${item.landingPageUrl}`,
+                image: item.searchImage || '',
+                mrp: item.mrp || 0,
+                currentPrice: item.price || 0,
+                discountPercent: item.mrp > 0 ? Math.round(((item.mrp - item.price) / item.mrp) * 100) : 0,
+                category: item.category || 'Fashion',
+                availability: isAvailable,
+                lastUpdated: new Date()
+            };
+        });
     }
 
     async scrapeDOM(page) {

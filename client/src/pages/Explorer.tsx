@@ -86,7 +86,12 @@ const Explorer = () => {
   };
 
   const brandsList = ['H&M', "Levi's", 'Rare Rabbit', 'U.S. Polo Assn.', 'Van Heusen', 'Tommy Hilfiger', 'Calvin Klein', 'Allen Solly', 'Arrow', 'Louis Philippe', 'Jack & Jones', 'Wrogn', 'Roadster', 'HRX by Hrithik Roshan', 'Puma', 'Adidas', 'Nike', 'Flying Machine', 'Pepe Jeans', 'Celio'];
-  const categoriesList = ['Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Shorts', 'Jackets', 'Sweatshirts', 'Shoes', 'Accessories', 'Other'];
+  const categoriesList = [
+    'Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Shorts', 'Jackets', 
+    'Sweatshirts & Hoodies', 'Shoes', 'Watches', 'Fragrance', 
+    'Sunglasses', 'Belts', 'Wallets', 'Bags', 'Ethnic Wear', 
+    'Formal Wear', 'Innerwear & Socks', 'Activewear', 'Other'
+  ];
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => 
