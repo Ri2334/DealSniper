@@ -68,6 +68,7 @@ const Explorer = () => {
   };
 
   useEffect(() => {
+    console.log('%c[DEALSNIPER] Explorer v4.0 Active', 'color: white; background: #2563eb; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
     const timer = setTimeout(() => {
       setPage(1);
       fetchProducts(1, false);
@@ -114,8 +115,11 @@ const Explorer = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Advanced Explorer</h1>
-          <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} matches.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Advanced Explorer</h1>
+            <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">v4.0 BUILD</span>
+          </div>
+          <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} matches in system.</p>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -334,14 +338,15 @@ const Explorer = () => {
             </div>
           )}
 
-          {products.length > 0 && products.length < totalProducts && (
-            <div className="mt-12 flex justify-center pb-20">
+          {products.length > 0 && (
+            <div className="mt-16 flex flex-col items-center gap-4 pb-20">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Inventory: {totalProducts} items matched</p>
               <button 
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-primary text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:shadow-primary/30 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+                className="bg-primary text-white px-20 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:shadow-primary/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 border-4 border-white"
               >
-                {loadingMore ? 'SEARCHING FOR MORE...' : `LOAD MORE (${totalProducts - products.length} REMAINING)`}
+                {loadingMore ? 'HUNTING...' : `LOAD MORE (${totalProducts - products.length} DEALS)`}
               </button>
             </div>
           )}

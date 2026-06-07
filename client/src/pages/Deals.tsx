@@ -54,6 +54,7 @@ const Deals = () => {
   };
 
   useEffect(() => {
+    console.log('%c[DEALSNIPER] Deals v4.0 Active', 'color: white; background: #ea580c; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
     setPage(1);
     fetchDeals(1, false);
   }, [selectedCategories, selectedBrands, gender, priceMax]);
@@ -94,7 +95,10 @@ const Deals = () => {
             <Flame size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">HOT DEALS</h1>
+            <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">HOT DEALS</h1>
+                <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">v4.0 BUILD</span>
+            </div>
             <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} massive price drops.</p>
           </div>
         </div>
@@ -236,12 +240,13 @@ const Deals = () => {
             </div>
           )}
 
-          {products.length > 0 && products.length < totalProducts && (
-            <div className="mt-12 flex justify-center pb-20">
+          {products.length > 0 && (
+            <div className="mt-16 flex flex-col items-center gap-4 pb-20">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Inventory: {totalProducts} massive deals matched</p>
               <button 
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-primary text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:shadow-primary/30 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+                className="bg-primary text-white px-20 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:shadow-primary/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 border-4 border-white"
               >
                 {loadingMore ? 'HUNTING...' : `LOAD MORE (${totalProducts - products.length} DEALS)`}
               </button>
