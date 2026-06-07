@@ -7,14 +7,33 @@ const TelegramService = require('./telegram');
 class ProductMonitor {
   static categorize(name, url, category = '') {
     const text = `${name} ${url} ${category}`.toLowerCase();
-    if (text.includes('shirt') && !text.includes('t-shirt') && !text.includes('tshirt')) return 'Shirts';
-    if (text.includes('t-shirt') || text.includes('tshirt') || text.includes('tee')) return 'T-Shirts';
-    if (text.includes('jeans')) return 'Jeans';
-    if (text.includes('trouser') || text.includes('chino') || text.includes('pant') || text.includes('short')) return 'Trousers';
-    if (text.includes('jacket') || text.includes('coat')) return 'Jackets';
-    if (text.includes('sweatshirt') || text.includes('hoodie') || text.includes('sweater') || text.includes('pullover')) return 'Sweatshirts';
-    if (text.includes('shoe') || text.includes('sneaker') || text.includes('footwear') || text.includes('boot') || text.includes('flip flop') || text.includes('sandal')) return 'Shoes';
-    if (text.includes('belt') || text.includes('wallet') || text.includes('watch') || text.includes('bag') || text.includes('backpack') || text.includes('sock') || text.includes('cap') || text.includes('hat') || text.includes('sunglass')) return 'Accessories';
+    
+    // Most specific first
+    if (text.includes('watch')) return 'Watches';
+    if (text.includes('perfume') || text.includes('fragrance') || text.includes('deodorant')) return 'Fragrance';
+    if (text.includes('sunglass')) return 'Sunglasses';
+    if (text.includes('wallet') || text.includes('card holder')) return 'Wallets';
+    if (text.includes('belt')) return 'Belts';
+    if (text.includes('bag') || text.includes('backpack') || text.includes('handbag') || text.includes('clutch')) return 'Bags';
+    
+    if (text.includes('kurta') || text.includes('sherwani') || text.includes('ethnic')) return 'Ethnic Wear';
+    if (text.includes('blazer') || text.includes('waistcoat') || text.includes('suit')) return 'Formal Wear';
+    
+    if (text.includes('t-shirt') || text.includes('tshirt') || text.includes('tee') || text.includes('polo')) return 'T-Shirts';
+    if (text.includes('shirt')) return 'Shirts'; // After T-Shirts to avoid overlap
+    
+    if (text.includes('jeans') || text.includes('denim')) return 'Jeans';
+    if (text.includes('short')) return 'Shorts';
+    if (text.includes('trouser') || text.includes('chino') || text.includes('pant') || text.includes('jogger')) return 'Trousers';
+    
+    if (text.includes('jacket') || text.includes('coat') || text.includes('parka') || text.includes('bomber')) return 'Jackets';
+    if (text.includes('sweatshirt') || text.includes('hoodie') || text.includes('sweater') || text.includes('pullover') || text.includes('cardigan')) return 'Sweatshirts & Hoodies';
+    
+    if (text.includes('shoe') || text.includes('sneaker') || text.includes('footwear') || text.includes('boot') || text.includes('flip flop') || text.includes('sandal') || text.includes('loafer')) return 'Shoes';
+    
+    if (text.includes('brief') || text.includes('trunk') || text.includes('boxer') || text.includes('vest') || text.includes('innerwear') || text.includes('sock')) return 'Innerwear & Socks';
+    if (text.includes('active') || text.includes('track') || text.includes('gym') || text.includes('training')) return 'Activewear';
+    
     return 'Other';
   }
 
@@ -158,27 +177,6 @@ class ProductMonitor {
 
           if (shouldAlert) {
             console.log(`[ALERT_TRIGGER] [${product.brand}] ${product.productId} Score: ${score}, Drop: ${dropPercent}%`);
-            await TelegramService.sendDealAlert(product, dropPercent, score, previousPrice, isLowestPrice);
-            await Alert.create({
-              productId: product.productId,
-              priceAtAlert: product.currentPrice,
-              discountAtAlert: product.discountPercent,
-              score
-            });
-          }
-        }
-      } catch (err) {
-        console.error(`[MONITOR_ERROR] [${item.productId}] ${err.message}`);
-      }
-    }
-
-    console.log(`[MONITOR_FINISH] Processed ${scrapedProducts.length} items in ${(Date.now() - startTime) / 1000}s. New: ${newProducts}, Updated: ${updatedProducts}`);
-    return { newProducts, updatedProducts };
-  }
-}
-
-module.exports = ProductMonitor;
-          console.log(`[ALERT_TRIGGER] [${product.brand}] ${product.productId} Score: ${score}, Drop: ${dropPercent}%`);
             await TelegramService.sendDealAlert(product, dropPercent, score, previousPrice, isLowestPrice);
             await Alert.create({
               productId: product.productId,
