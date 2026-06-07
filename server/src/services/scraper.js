@@ -18,17 +18,31 @@ class MyntraScraper extends ScraperAdapter {
      */
     findBrowserExecutable() {
         const baseDir = '/ms-playwright';
-        if (!fs.existsSync(baseDir)) return undefined;
+        if (!fs.existsSync(baseDir)) {
+            // Fallback for Railway/Docker if PLAYWRIGHT_BROWSERS_PATH is set
+            const envPath = process.env.PLAYWRIGHT_BROWSERS_PATH;
+            if (envPath && fs.existsSync(envPath)) {
+                return this.searchInDirectory(envPath);
+            }
+            return undefined;
+        }
+        return this.searchInDirectory(baseDir);
+    }
 
+    searchInDirectory(dir) {
         try {
-            const revisions = fs.readdirSync(baseDir);
+            const revisions = fs.readdirSync(dir);
             for (const rev of revisions) {
-                if (rev.startsWith('chromium-')) {
-                    const shellPath = path.join(baseDir, rev, 'chrome-headless-shell-linux64/chrome-headless-shell');
-                    if (fs.existsSync(shellPath)) return shellPath;
-                    
-                    const chromePath = path.join(baseDir, rev, 'chrome-linux/chrome');
-                    if (fs.existsSync(chromePath)) return chromePath;
+                if (rev.startsWith('chromium-') || rev.startsWith('chromium_headless_shell-')) {
+                    const paths = [
+                        path.join(dir, rev, 'chrome-headless-shell-linux64/chrome-headless-shell'),
+                        path.join(dir, rev, 'chrome-linux/chrome'),
+                        path.join(dir, rev, 'linux-1223/chrome-linux/chrome'), // Try versioned paths
+                        path.join(dir, rev, 'chrome-headless-shell-linux/chrome-headless-shell')
+                    ];
+                    for (const p of paths) {
+                        if (fs.existsSync(p)) return p;
+                    }
                 }
             }
         } catch (e) {
@@ -359,17 +373,6 @@ class MyntraScraper extends ScraperAdapter {
                         brand: el.querySelector('.product-brand')?.innerText,
                         landingPageUrl: link,
                         price: parseInt(el.querySelector('.product-discountedPrice')?.innerText.replace(/[^\d]/g, '')),
-                        mrp: parseInt(el.querySelector('.product-strike')?.innerText.replace(/[^\d]/g, '')),
-                    });
-                }
-            });
-            return items;
-        });
-    }
-}
-
-module.exports = new MyntraScraper();
-rseInt(el.querySelector('.product-discountedPrice')?.innerText.replace(/[^\d]/g, '')),
                         mrp: parseInt(el.querySelector('.product-strike')?.innerText.replace(/[^\d]/g, '')),
                     });
                 }
