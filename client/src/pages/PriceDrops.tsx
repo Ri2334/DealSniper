@@ -83,10 +83,10 @@ const PriceDrops = () => {
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-8 items-start">
         
         {/* Sidebar Filters */}
-        <aside className={`w-full md:w-72 space-y-6 ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6 overflow-y-auto' : 'hidden md:block'}`}>
+        <aside className={`w-full md:w-72 shrink-0 space-y-6 md:sticky md:top-24 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6' : 'hidden md:block'}`}>
           <div className="flex items-center justify-between mb-2">
              <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tighter"><Filter size={20} className="text-primary"/> DROP FILTERS</h3>
              {isSidebarOpen && (

@@ -116,14 +116,14 @@ const Explorer = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Advanced Explorer</h1>
-            <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">PREMIUM BUILD</span>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">Explorer</h1>
+            <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm shadow-red-100">PREMIUM BUILD</span>
           </div>
-          <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} matches in system.</p>
+          <p className="text-gray-500 font-medium">Syncing with {totalProducts.toLocaleString()} fashion deals across target stores.</p>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -133,26 +133,26 @@ const Explorer = () => {
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         
         {/* Sidebar Filters */}
-        <aside className={`w-full md:w-72 space-y-6 ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6 overflow-y-auto' : 'hidden md:block'}`}>
+        <aside className={`w-full md:w-80 shrink-0 space-y-6 md:sticky md:top-24 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6' : 'hidden md:block'}`}>
           <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-             <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tighter"><Filter size={20} className="text-primary"/> ADVANCED FILTERS</h3>
+             <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tighter uppercase text-sm"><Filter size={18} className="text-primary"/> Precision Control</h3>
              {isSidebarOpen && (
-                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-100 rounded-full">
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
                     <X size={20}/>
                 </button>
              )}
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-8 pb-10">
             <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
                   type="text" 
-                  placeholder="Search products..." 
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm font-bold shadow-inner"
+                  placeholder="Keyword Search..." 
+                  className="w-full pl-11 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm font-bold shadow-inner transition-all placeholder:text-gray-300"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                 />
@@ -161,63 +161,74 @@ const Explorer = () => {
             <div className="grid grid-cols-1 gap-3">
                 <button 
                     onClick={() => setLowestPriceOnly(!lowestPriceOnly)}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${lowestPriceOnly ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-transparent text-gray-500'}`}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left group ${lowestPriceOnly ? 'bg-green-50 border-green-200 text-green-700 shadow-sm' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
                 >
-                    <IndianRupee size={18} className={lowestPriceOnly ? 'text-green-600' : 'text-gray-400'} />
+                    <IndianRupee size={18} className={lowestPriceOnly ? 'text-green-600' : 'text-gray-400 group-hover:scale-110 transition-transform'} />
                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">Record Lows Only</span>
                 </button>
                 <button 
                     onClick={() => setNewTodayOnly(!newTodayOnly)}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${newTodayOnly ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-transparent text-gray-500'}`}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left group ${newTodayOnly ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
                 >
-                    <Tag size={18} className={newTodayOnly ? 'text-blue-600' : 'text-gray-400'} />
-                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Scraped Today</span>
+                    <Tag size={18} className={newTodayOnly ? 'text-blue-600' : 'text-gray-400 group-hover:scale-110 transition-transform'} />
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Discovery Today</span>
                 </button>
             </div>
 
-            <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><IndianRupee size={12}/> Budget Range</label>
-                <div className="grid grid-cols-2 gap-2">
-                    <input 
-                        type="number" 
-                        placeholder="Min ₹" 
-                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black"
-                        value={priceMin}
-                        onChange={(e) => setPriceMin(e.target.value)}
-                    />
-                    <input 
-                        type="number" 
-                        placeholder="Max ₹" 
-                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black"
-                        value={priceMax}
-                        onChange={(e) => setPriceMax(e.target.value)}
-                    />
+            <div className="space-y-4">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><IndianRupee size={12}/> Budget Bracket</label>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <span className="text-[9px] font-black text-gray-300 px-1 uppercase tracking-tighter">Min ₹</span>
+                        <input 
+                            type="number" 
+                            placeholder="0" 
+                            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black shadow-inner focus:ring-1 focus:ring-primary"
+                            value={priceMin}
+                            onChange={(e) => setPriceMin(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <span className="text-[9px] font-black text-gray-300 px-1 uppercase tracking-tighter">Max ₹</span>
+                        <input 
+                            type="number" 
+                            placeholder="Max" 
+                            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black shadow-inner focus:ring-1 focus:ring-primary"
+                            value={priceMax}
+                            onChange={(e) => setPriceMax(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Layers size={12}/> Sort Strategy</label>
-              <select 
-                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-primary text-xs font-black"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="dealScore_desc">Intelligence (High to Low)</option>
-                <option value="discount_desc">Price Drop % (Max first)</option>
-                <option value="price_asc">Price (Low to High)</option>
-                <option value="price_desc">Price (High to Low)</option>
-                <option value="newest">Latest Discovery</option>
-              </select>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Layers size={12}/> Order Strategy</label>
+              <div className="relative group">
+                <select 
+                    className="w-full px-4 py-4 bg-white border border-gray-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-primary text-xs font-black appearance-none cursor-pointer group-hover:border-primary/20 transition-colors"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                >
+                    <option value="dealScore_desc">Best Intel First</option>
+                    <option value="discount_desc">Price Drop %</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="newest">Latest Found</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-primary transition-colors">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Min Discount: {minDiscount || 0}%</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Min Price Drop</label>
                 <div className="flex flex-wrap gap-2">
                     {[30, 50, 70, 80].map(d => (
                         <button 
                             key={d}
                             onClick={() => setMinDiscount(minDiscount === String(d) ? '' : String(d))}
-                            className={`px-3 py-2 rounded-lg text-[10px] font-black transition-all border ${minDiscount === String(d) ? 'bg-red-600 border-red-600 text-white' : 'bg-white border-gray-100 text-gray-500'}`}
+                            className={`flex-1 min-w-[60px] py-3 rounded-xl text-[10px] font-black transition-all border ${minDiscount === String(d) ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-100' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:scale-105 active:scale-95'}`}
                         >
                             {d}%+
                         </button>
@@ -226,13 +237,16 @@ const Explorer = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Premium Brands ({selectedBrands.length})</label>
-              <div className="max-h-48 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-between">
+                <span>Premium Brands</span>
+                <span className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[8px]">{selectedBrands.length}</span>
+              </label>
+              <div className="max-h-64 overflow-y-auto pr-2 space-y-1.5 custom-scrollbar scroll-smooth">
                  {brandsList.sort().map(b => (
                     <button 
                         key={b} 
                         onClick={() => toggleBrand(b)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all ${selectedBrands.includes(b) ? 'bg-primary text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-[11px] font-bold transition-all ${selectedBrands.includes(b) ? 'bg-primary text-white shadow-md shadow-blue-100' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 active:scale-[0.98]'}`}
                     >
                         {b}
                         {selectedBrands.includes(b) && <Check size={12}/>}
@@ -242,13 +256,13 @@ const Explorer = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Categories ({selectedCategories.length})</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Store Sections</label>
               <div className="grid grid-cols-2 gap-2">
                  {categoriesList.map(c => (
                     <button 
                         key={c} 
                         onClick={() => toggleCategory(c)}
-                        className={`px-2 py-2.5 rounded-xl text-[10px] font-bold text-center border transition-all ${selectedCategories.includes(c) ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'}`}
+                        className={`px-2 py-3.5 rounded-xl text-[10px] font-black text-center border transition-all ${selectedCategories.includes(c) ? 'bg-gray-900 border-gray-900 text-white shadow-md' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 active:scale-95'}`}
                     >
                         {c}
                     </button>
@@ -258,15 +272,15 @@ const Explorer = () => {
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gender</label>
-                    <select className="w-full px-2 py-2.5 bg-gray-50 border-none rounded-xl text-[10px] font-bold" value={gender} onChange={(e) => setGender(e.target.value)}>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center block leading-none">Gender</label>
+                    <select className="w-full px-2 py-4 bg-gray-50 border-none rounded-2xl text-[10px] font-black text-center cursor-pointer shadow-inner appearance-none focus:ring-2 focus:ring-primary" value={gender} onChange={(e) => setGender(e.target.value)}>
                         <option value="">Any</option>
                         {['Men', 'Women', 'Unisex', 'Boys', 'Girls'].map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Age</label>
-                    <select className="w-full px-2 py-2.5 bg-gray-50 border-none rounded-xl text-[10px] font-bold" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center block leading-none">Age Group</label>
+                    <select className="w-full px-2 py-4 bg-gray-50 border-none rounded-2xl text-[10px] font-black text-center cursor-pointer shadow-inner appearance-none focus:ring-2 focus:ring-primary" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
                         <option value="">Any</option>
                         {['Adult', 'Kids'].map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
@@ -275,71 +289,73 @@ const Explorer = () => {
 
             <button 
                onClick={clearFilters}
-               className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl text-xs tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-xl"
+               className="w-full py-5 bg-gray-900 text-white font-black rounded-3xl text-xs tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-2xl hover:scale-[1.02] active:scale-95 group border-2 border-gray-800"
             >
-              <RotateCcw size={14} /> RESET FILTERS
+              <RotateCcw size={14} className="group-hover:rotate-180 transition-transform duration-500" /> RESET FILTERS
             </button>
           </div>
         </aside>
 
         {/* Results Grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0 w-full">
           {loading ? (
-            <PremiumLoader message="Scanning database for elite deals..." />
+            <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                <PremiumLoader message="Syncing with elite inventory..." />
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
               {products.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-32 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                        <Search size={32} className="text-gray-200" />
+                <div className="col-span-full flex flex-col items-center justify-center py-48 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 shadow-inner">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-8 animate-pulse">
+                        <Search size={40} className="text-gray-200" />
                     </div>
-                    <p className="text-gray-500 font-black uppercase text-xs tracking-widest">No products found matching filters.</p>
-                    <button onClick={clearFilters} className="mt-4 text-primary font-bold text-sm underline hover:text-blue-700 transition-colors">Reset all filters</button>
+                    <p className="text-gray-500 font-black uppercase text-xs tracking-[0.3em]">Zero results in target</p>
+                    <button onClick={clearFilters} className="mt-8 bg-primary/10 text-primary px-8 py-3 rounded-full font-black text-sm tracking-tighter hover:bg-primary hover:text-white transition-all active:scale-95">WIPE ALL FILTERS</button>
                 </div>
               ) : (
                 products.map((product: any) => (
-                  <a href={product.url} target="_blank" rel="noopener noreferrer" key={product._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group flex flex-col cursor-pointer h-full">
-                    <div className="relative h-72 overflow-hidden bg-gray-50">
+                  <a href={product.url} target="_blank" rel="noopener noreferrer" key={product._id} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] transition-all duration-700 transform hover:-translate-y-4 group flex flex-col cursor-pointer h-full relative">
+                    <div className="relative h-80 overflow-hidden bg-gray-50">
                       <img 
                         src={product.image || 'https://via.placeholder.com/300x400'} 
                         alt={product.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                         loading="lazy"
                       />
-                      <div className="absolute top-3 left-3 flex flex-col gap-2">
-                        <div className="bg-white/90 backdrop-blur-md text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tight shadow-sm flex items-center gap-1.5 border border-primary/10">
+                      <div className="absolute top-5 left-5 flex flex-col gap-2">
+                        <div className="bg-white/95 backdrop-blur-md text-primary text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-tight shadow-sm flex items-center gap-1.5 border border-primary/10 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                           <Award size={12} /> {product.dealScore} INTEL
                         </div>
                       </div>
                       {product.discountPercent > 0 && (
-                        <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xl">
+                        <div className="absolute top-5 right-5 bg-red-600 text-white text-[11px] font-black px-4 py-2 rounded-2xl shadow-2xl border-2 border-white/20 transform rotate-3 group-hover:rotate-0 transition-transform">
                           -{product.discountPercent}%
                         </div>
                       )}
                       {product.lowestPrice && product.currentPrice <= product.lowestPrice && (
-                        <div className="absolute bottom-3 left-3 bg-green-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-tighter">
+                        <div className="absolute bottom-5 left-5 bg-green-600 text-white text-[9px] font-black px-4 py-1.5 rounded-xl shadow-lg uppercase tracking-widest border border-white/20">
                           Record Low
                         </div>
                       )}
                     </div>
-                    <div className="p-5 flex flex-col flex-1">
-                      <div className="flex justify-between items-start mb-1">
-                        <p className="text-[10px] text-primary font-black uppercase tracking-widest">{product.brand}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">{product.category}</p>
+                    <div className="p-8 flex flex-col flex-1">
+                      <div className="flex justify-between items-start mb-3">
+                        <p className="text-[11px] text-primary font-black uppercase tracking-[0.2em]">{product.brand}</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase bg-gray-50 px-2.5 py-1 rounded-md">{product.category}</p>
                       </div>
-                      <h3 className="text-sm font-bold text-gray-900 line-clamp-2 h-10 mb-4 group-hover:text-primary transition-colors leading-tight">
+                      <h3 className="text-base font-black text-gray-900 line-clamp-2 h-12 mb-8 group-hover:text-primary transition-colors leading-tight tracking-tight">
                         {product.name}
                       </h3>
                       <div className="mt-auto">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{product.currentPrice}</span>
+                        <div className="flex items-center gap-3 mb-8">
+                          <span className="text-3xl font-black text-gray-900 tracking-tighter">₹{product.currentPrice.toLocaleString()}</span>
                           {product.mrp > product.currentPrice && (
-                            <span className="text-sm text-gray-400 line-through font-bold opacity-60">₹{product.mrp}</span>
+                            <span className="text-base text-gray-300 line-through font-bold opacity-60">₹{product.mrp.toLocaleString()}</span>
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-center gap-2 w-full py-3.5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-900 text-[10px] font-black rounded-xl uppercase transition-all shadow-sm group-hover:shadow-primary/30">
-                          Unlock Deal <ExternalLink size={14} />
+                        <div className="flex items-center justify-center gap-3 w-full py-5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-900 text-[11px] font-black rounded-3xl uppercase transition-all shadow-sm group-hover:shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] active:scale-95 group-hover:scale-[1.02]">
+                          Unlock Deal <ExternalLink size={16} />
                         </div>
                       </div>
                     </div>
@@ -350,14 +366,27 @@ const Explorer = () => {
           )}
 
           {products.length > 0 && products.length < totalProducts && (
-            <div className="mt-16 flex flex-col items-center gap-4 pb-20">
-              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Inventory: {totalProducts} items matched</p>
+            <div className="mt-24 flex flex-col items-center gap-6 pb-32">
+                <div className="flex items-center gap-4 w-full px-12">
+                    <div className="flex-1 h-px bg-gray-100"></div>
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.5em] animate-pulse">Sync available: {totalProducts - products.length} deals</p>
+                    <div className="flex-1 h-px bg-gray-100"></div>
+                </div>
               <button 
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-primary text-white px-20 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:shadow-primary/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 border-4 border-white"
+                className="bg-primary text-white px-28 py-7 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-blue-200 hover:shadow-primary/50 hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 border-[10px] border-white group"
               >
-                {loadingMore ? 'HUNTING...' : `LOAD MORE (${totalProducts - products.length} DEALS)`}
+                {loadingMore ? (
+                    <div className="flex items-center gap-4">
+                        <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        SYNCING...
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        LOAD MORE DEALS <ChevronRight size={28} className="group-hover:translate-x-3 transition-transform duration-500"/>
+                    </div>
+                )}
               </button>
             </div>
           )}
@@ -366,5 +395,21 @@ const Explorer = () => {
     </div>
   );
 };
+
+const ChevronRight = ({ size, className }: { size: number, className?: string }) => (
+    <svg 
+        width={size} 
+        height={size} 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="3.5" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className={className}
+    >
+        <path d="M9 18l6-6-6-6"/>
+    </svg>
+);
 
 export default Explorer;

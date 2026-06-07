@@ -1,5 +1,6 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
+const path = require('path');
 
 async function verifyPlaywright() {
   console.log('--- [STARTUP_VERIFICATION] Checking Playwright ---');
@@ -15,6 +16,43 @@ async function verifyPlaywright() {
     
     console.log('Attempting to launch browser...');
     const browser = await chromium.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    
+    const version = browser.version();
+    console.log(`SUCCESS: Browser launched. Version: ${version}`);
+    
+    await browser.close();
+    console.log('--- [STARTUP_VERIFICATION] Passed ---');
+    process.exit(0);
+  } catch (error) {
+    console.error(`CRITICAL: Playwright verification failed: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+verifyPlaywright();
+           exePath = p;
+                break;
+              }
+            }
+          }
+          if (exePath !== chromium.executablePath()) break;
+        }
+      }
+    }
+
+    console.log(`Using executable path: ${exePath}`);
+    
+    if (!fs.existsSync(exePath)) {
+      console.error(`CRITICAL: Chromium executable not found at any known path.`);
+      // On Railway, sometimes the browser is in node_modules but under a different name
+      process.exit(1);
+    }
+    
+    console.log('Attempting to launch browser...');
+    const browser = await chromium.launch({
+      executablePath: exePath,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
     

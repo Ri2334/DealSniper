@@ -92,7 +92,7 @@ const Deals = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="bg-orange-600 p-3 rounded-2xl text-white shadow-lg shadow-orange-100">
@@ -101,7 +101,7 @@ const Deals = () => {
           <div>
             <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">HOT DEALS</h1>
-                <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">PREMIUM BUILD</span>
+                <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">PREMIUM BUILD</span>
             </div>
             <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} massive price drops.</p>
           </div>
@@ -114,12 +114,12 @@ const Deals = () => {
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         
         {/* Sidebar Filters */}
-        <aside className={`w-full md:w-72 space-y-6 ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6 overflow-y-auto' : 'hidden md:block'}`}>
+        <aside className={`w-full md:w-80 shrink-0 space-y-6 md:sticky md:top-24 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6' : 'hidden md:block'}`}>
           <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-             <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tighter"><Filter size={20} className="text-primary"/> DEAL FILTERS</h3>
+             <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tighter uppercase text-sm"><Filter size={18} className="text-primary"/> Deal Filters</h3>
              {isSidebarOpen && (
                 <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-100 rounded-full">
                     <X size={20}/>
@@ -130,18 +130,18 @@ const Deals = () => {
           <div className="space-y-8">
             <div className="space-y-3">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><IndianRupee size={12}/> Budget Range</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                     <input 
                         type="number" 
                         placeholder="Min ₹" 
-                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black"
+                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black shadow-inner"
                         value={priceMin}
                         onChange={(e) => setPriceMin(e.target.value)}
                     />
                     <input 
                         type="number" 
                         placeholder="Max ₹" 
-                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black"
+                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black shadow-inner"
                         value={priceMax}
                         onChange={(e) => setPriceMax(e.target.value)}
                     />
@@ -150,12 +150,12 @@ const Deals = () => {
 
             <div className="space-y-3">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Premium Brands ({selectedBrands.length})</label>
-              <div className="max-h-48 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
+              <div className="max-h-60 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
                  {brandsList.sort().map(b => (
                     <button 
                         key={b} 
                         onClick={() => toggleBrand(b)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all ${selectedBrands.includes(b) ? 'bg-primary text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-[11px] font-bold transition-all ${selectedBrands.includes(b) ? 'bg-primary text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                     >
                         {b}
                         {selectedBrands.includes(b) && <Check size={12}/>}
@@ -171,7 +171,7 @@ const Deals = () => {
                     <button 
                         key={c} 
                         onClick={() => toggleCategory(c)}
-                        className={`px-2 py-2.5 rounded-xl text-[10px] font-bold text-center border transition-all ${selectedCategories.includes(c) ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'}`}
+                        className={`px-2 py-3 rounded-xl text-[10px] font-black text-center border transition-all ${selectedCategories.includes(c) ? 'bg-gray-900 border-gray-900 text-white shadow-md' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'}`}
                     >
                         {c}
                     </button>
@@ -181,7 +181,7 @@ const Deals = () => {
 
             <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Gender</label>
-                <select className="w-full px-2 py-2.5 bg-gray-50 border-none rounded-xl text-[10px] font-bold" value={gender} onChange={(e) => setGender(e.target.value)}>
+                <select className="w-full px-2 py-3 bg-gray-50 border-none rounded-2xl text-[10px] font-black text-center cursor-pointer shadow-inner" value={gender} onChange={(e) => setGender(e.target.value)}>
                     <option value="">Any</option>
                     {['Men', 'Women', 'Unisex', 'Boys', 'Girls'].map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
@@ -189,63 +189,63 @@ const Deals = () => {
 
             <button 
                onClick={clearFilters}
-               className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl text-xs tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-xl"
+               className="w-full py-5 bg-gray-900 text-white font-black rounded-3xl text-xs tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95"
             >
-              <RotateCcw size={14} /> RESET
+              <RotateCcw size={14} /> RESET FILTERS
             </button>
           </div>
         </aside>
 
         {/* Results Grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0 w-full">
           {loading ? (
             <PremiumLoader message="Hunting for elite mega deals..." />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
               {products.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-32 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                        <Flame size={32} className="text-gray-100" />
+                <div className="col-span-full flex flex-col items-center justify-center py-40 bg-white rounded-3xl border-2 border-dashed border-gray-100 shadow-inner">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                        <Flame size={40} className="text-gray-100" />
                     </div>
-                    <p className="text-gray-500 font-black uppercase text-xs tracking-widest">No mega deals found yet.</p>
-                    <button onClick={clearFilters} className="mt-4 text-primary font-bold text-sm underline hover:text-blue-700 transition-colors">Reset filters</button>
+                    <p className="text-gray-500 font-black uppercase text-xs tracking-[0.2em]">No mega deals found yet.</p>
+                    <button onClick={clearFilters} className="mt-6 text-primary font-black text-sm underline tracking-tighter hover:text-blue-700 transition-colors">WIPE FILTERS</button>
                 </div>
               ) : (
                 products.map((product: any) => (
-                  <a href={product.url} target="_blank" rel="noopener noreferrer" key={product._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group flex flex-col cursor-pointer h-full">
-                    <div className="relative h-72 overflow-hidden bg-gray-50">
+                  <a href={product.url} target="_blank" rel="noopener noreferrer" key={product._id} className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 group flex flex-col cursor-pointer h-full border-b-4 border-b-transparent hover:border-b-orange-500">
+                    <div className="relative h-80 overflow-hidden bg-gray-50">
                       <img 
                         src={product.image || 'https://via.placeholder.com/300x400'} 
                         alt={product.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                         loading="lazy"
                       />
-                      <div className="absolute top-3 left-3 flex flex-col gap-2">
-                        <div className="bg-white/90 backdrop-blur-md text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tight shadow-sm flex items-center gap-1.5 border border-primary/10">
+                      <div className="absolute top-4 left-4 flex flex-col gap-2">
+                        <div className="bg-white/95 backdrop-blur-md text-primary text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-tight shadow-sm flex items-center gap-1.5 border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
                           <Award size={12} /> {product.dealScore} INTEL
                         </div>
-                        <div className="bg-orange-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-tighter w-fit">
+                        <div className="bg-orange-600 text-white text-[9px] font-black px-3 py-1 rounded-xl shadow-lg uppercase tracking-widest w-fit animate-pulse border border-white/20">
                           HOT DEAL
                         </div>
                       </div>
-                      <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xl animate-pulse">
+                      <div className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-black px-3 py-2 rounded-2xl shadow-xl border-2 border-white/20">
                         {product.discountPercent}% OFF
                       </div>
                     </div>
-                    <div className="p-5 flex flex-col flex-1">
-                      <div className="flex justify-between items-start mb-1">
+                    <div className="p-6 flex flex-col flex-1">
+                      <div className="flex justify-between items-start mb-2">
                         <p className="text-[10px] text-primary font-black uppercase tracking-widest">{product.brand}</p>
                       </div>
-                      <h3 className="text-sm font-bold text-gray-900 line-clamp-2 h-10 mb-4 group-hover:text-primary transition-colors leading-tight">
+                      <h3 className="text-sm font-bold text-gray-900 line-clamp-2 h-10 mb-6 group-hover:text-primary transition-colors leading-tight tracking-tight">
                         {product.name}
                       </h3>
                       <div className="mt-auto">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{product.currentPrice}</span>
-                          <span className="text-sm text-gray-400 line-through font-bold opacity-60">₹{product.mrp}</span>
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{product.currentPrice.toLocaleString()}</span>
+                          <span className="text-sm text-gray-400 line-through font-bold opacity-40">₹{product.mrp.toLocaleString()}</span>
                         </div>
                         
-                        <div className="flex items-center justify-center gap-2 w-full py-3.5 bg-primary group-hover:bg-blue-700 text-white text-xs font-black rounded-xl uppercase transition-all shadow-lg shadow-blue-100 group-hover:shadow-blue-300">
+                        <div className="flex items-center justify-center gap-2 w-full py-4 bg-primary group-hover:bg-blue-700 text-white text-xs font-black rounded-2xl uppercase transition-all shadow-lg shadow-blue-100 group-hover:shadow-blue-300 active:scale-95">
                           Buy on Myntra <ExternalLink size={14} />
                         </div>
                       </div>
@@ -257,14 +257,23 @@ const Deals = () => {
           )}
 
           {products.length > 0 && products.length < totalProducts && (
-            <div className="mt-16 flex flex-col items-center gap-4 pb-20">
-              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Inventory: {totalProducts} massive deals matched</p>
+            <div className="mt-20 flex flex-col items-center gap-6 pb-20">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] animate-pulse">Sync available: {totalProducts - products.length} deals</p>
               <button 
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-primary text-white px-20 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:shadow-primary/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 border-4 border-white"
+                className="bg-primary text-white px-24 py-6 rounded-3xl font-black text-lg shadow-2xl shadow-blue-200 hover:shadow-primary/50 hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 border-8 border-white group"
               >
-                {loadingMore ? 'HUNTING...' : `LOAD MORE (${totalProducts - products.length} DEALS)`}
+                {loadingMore ? (
+                    <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        HUNTING...
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-3 font-black uppercase tracking-tighter">
+                        LOAD MORE DEALS
+                    </div>
+                )}
               </button>
             </div>
           )}

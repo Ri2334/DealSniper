@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { chromium } = require('playwright');
 const fs = require('fs');
+const path = require('path');
 const ProxyManager = require('./proxyManager');
 const StealthUtils = require('../utils/stealth');
 
@@ -10,6 +11,30 @@ class MyntraScraper extends ScraperAdapter {
     constructor() {
         super('Myntra');
         this.strategies = ['GATEWAY_API', 'PLAYWRIGHT', 'HTML_SCRAPE'];
+    }
+
+    /**
+     * Helper to find Playwright browser in Docker
+     */
+    findBrowserExecutable() {
+        const baseDir = '/ms-playwright';
+        if (!fs.existsSync(baseDir)) return undefined;
+
+        try {
+            const revisions = fs.readdirSync(baseDir);
+            for (const rev of revisions) {
+                if (rev.startsWith('chromium-')) {
+                    const shellPath = path.join(baseDir, rev, 'chrome-headless-shell-linux64/chrome-headless-shell');
+                    if (fs.existsSync(shellPath)) return shellPath;
+                    
+                    const chromePath = path.join(baseDir, rev, 'chrome-linux/chrome');
+                    if (fs.existsSync(chromePath)) return chromePath;
+                }
+            }
+        } catch (e) {
+            console.error('[BROWSER_SEARCH_ERROR]', e.message);
+        }
+        return undefined;
     }
 
     /**
@@ -155,10 +180,8 @@ class MyntraScraper extends ScraperAdapter {
         try {
             const proxy = ProxyManager.getPlaywrightConfig();
             
-            // Explicitly look for the browser in the Docker image's known location
-            // This bypasses any environment variable confusion on Railway
-            const dockerPath = '/ms-playwright/chromium-1223/chrome-headless-shell-linux64/chrome-headless-shell';
-            const exePath = fs.existsSync(dockerPath) ? dockerPath : undefined;
+            // Explicitly look for the browser in the Docker image
+            const exePath = this.findBrowserExecutable();
             
             console.log(`[PLAYWRIGHT_START] [${brand}] Launching browser... Path: ${exePath || 'DEFAULT'}, Proxy: ${proxy ? 'YES' : 'NO'}`);
             
@@ -255,10 +278,13 @@ class MyntraScraper extends ScraperAdapter {
                 });
 
                 // More resilient regex to find __myx
-                const match = html.match(/window\.__myx(_data)?\s*=\s*({.*?})[\s;]*<\/script>/);
+                const match = html.match(/window\.__myx(_data)?\s*=\s*({.*?})[\s;]*<\/script>/) || 
+                              html.match(/__myx(_data)?\s*=\s*({.*?})[\s;]*<\/script>/) ||
+                              html.match(/<script>\s*window\.__myx\s*=\s*({.*?})\s*<\/script>/);
                 
-                if (match && match[2]) {
-                    const myx = JSON.parse(match[2]);
+                if (match && (match[2] || match[1])) {
+                    const jsonStr = match[2] || match[1];
+                    const myx = JSON.parse(jsonStr);
                     const results = myx?.searchData?.results?.products;
                     if (results && results.length > 0) {
                         const formatted = this.formatProducts(results, brand);
@@ -333,6 +359,17 @@ class MyntraScraper extends ScraperAdapter {
                         brand: el.querySelector('.product-brand')?.innerText,
                         landingPageUrl: link,
                         price: parseInt(el.querySelector('.product-discountedPrice')?.innerText.replace(/[^\d]/g, '')),
+                        mrp: parseInt(el.querySelector('.product-strike')?.innerText.replace(/[^\d]/g, '')),
+                    });
+                }
+            });
+            return items;
+        });
+    }
+}
+
+module.exports = new MyntraScraper();
+rseInt(el.querySelector('.product-discountedPrice')?.innerText.replace(/[^\d]/g, '')),
                         mrp: parseInt(el.querySelector('.product-strike')?.innerText.replace(/[^\d]/g, '')),
                     });
                 }
