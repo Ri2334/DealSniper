@@ -350,19 +350,23 @@ class MyntraScraper extends ScraperAdapter {
 
     formatProducts(items, brand) {
         return items.map(item => {
-            // Myntra availability logic - very aggressive to avoid "Out of Stock" showing up
+            // Myntra availability logic - ultra-aggressive
             let isAvailable = true;
             
             // Check all known Myntra availability flags
-            if (
+            const isOOS = 
                 item.inventory === 0 || 
                 item.outOfStock === true || 
                 item.available === false || 
                 item.inStock === false ||
                 item.status === 'out_of_stock' ||
-                (item.totalInventoryCount !== undefined && item.totalInventoryCount === 0)
-            ) {
+                item.buyButtonLabel === 'OUT OF STOCK' ||
+                item.buyButtonLabel === 'SOLD OUT' ||
+                (item.totalInventoryCount !== undefined && item.totalInventoryCount === 0);
+
+            if (isOOS) {
                 isAvailable = false;
+                console.log(`[SCRAPER_OOS] [${brand}] Flagged OOS: ${item.productName || item.product} (ID: ${item.productId})`);
             }
 
             return {
@@ -400,12 +404,6 @@ class MyntraScraper extends ScraperAdapter {
                 }
             });
             return items;
-        });
-    }
-}
-
-module.exports = new MyntraScraper();
-rn items;
         });
     }
 }
