@@ -29,18 +29,19 @@ const Deals = () => {
       
       if (selectedCategories.length > 0) params.append('category', selectedCategories.join(','));
       if (selectedBrands.length > 0) params.append('brand', selectedBrands.join(','));
-      if (gender) params.append('gender', gender);
-      if (priceMax && priceMax !== '') params.append('priceMax', priceMax);
+      if (gender && gender !== '') params.append('gender', gender);
+      if (priceMax && priceMax !== '0' && priceMax !== '') params.append('priceMax', priceMax);
 
       const apiUrl = `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`;
       console.log(`[DEBUG] Fetching Deals: ${apiUrl}`);
       
       const { data } = await axios.get(apiUrl);
       
+      const newItems = data.products || [];
       if (isLoadMore) {
-        setProducts(prev => [...prev, ...(data.products || [])]);
+        setProducts(prev => [...prev, ...newItems]);
       } else {
-        setProducts(data.products || []);
+        setProducts(newItems);
       }
       
       setTotalProducts(data.total || 0);
@@ -94,7 +95,7 @@ const Deals = () => {
           </div>
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">HOT DEALS</h1>
-            <p className="text-gray-500 font-medium">Biggest price drops across premium brands.</p>
+            <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} massive price drops.</p>
           </div>
         </div>
         <button 
@@ -236,13 +237,13 @@ const Deals = () => {
           )}
 
           {products.length > 0 && products.length < totalProducts && (
-            <div className="mt-12 flex justify-center">
+            <div className="mt-12 flex justify-center pb-20">
               <button 
                 onClick={loadMore}
                 disabled={loadingMore}
                 className="bg-primary text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:shadow-primary/30 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
               >
-                {loadingMore ? 'SEARCHING FOR MORE...' : 'LOAD MORE DEALS'}
+                {loadingMore ? 'HUNTING...' : `LOAD MORE (${totalProducts - products.length} DEALS)`}
               </button>
             </div>
           )}

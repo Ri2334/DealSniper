@@ -34,27 +34,28 @@ const Explorer = () => {
       params.append('page', pageToFetch.toString());
       params.append('limit', '24');
 
-      if (keyword && keyword.trim()) params.append('keyword', keyword.trim());
+      if (keyword && keyword.trim() !== '') params.append('keyword', keyword.trim());
       if (selectedBrands.length > 0) params.append('brand', selectedBrands.join(','));
       if (selectedCategories.length > 0) params.append('category', selectedCategories.join(','));
-      if (gender) params.append('gender', gender);
-      if (ageGroup) params.append('ageGroup', ageGroup);
+      if (gender && gender !== '') params.append('gender', gender);
+      if (ageGroup && ageGroup !== '') params.append('ageGroup', ageGroup);
       if (sortBy) params.append('sortBy', sortBy);
       if (lowestPriceOnly) params.append('lowestPriceOnly', 'true');
       if (newTodayOnly) params.append('newTodayOnly', 'true');
-      if (priceMax && priceMax !== '') params.append('priceMax', priceMax);
-      if (minDiscount && minDiscount !== '') params.append('minDiscount', minDiscount);
-      if (minScore && minScore !== '') params.append('dealScoreMin', minScore);
+      if (priceMax && priceMax !== '0' && priceMax !== '') params.append('priceMax', priceMax);
+      if (minDiscount && minDiscount !== '0' && minDiscount !== '') params.append('minDiscount', minDiscount);
+      if (minScore && minScore !== '0' && minScore !== '') params.append('dealScoreMin', minScore);
 
       const apiUrl = `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`;
       console.log(`[DEBUG] Fetching Explorer: ${apiUrl}`);
       
       const { data } = await axios.get(apiUrl);
       
+      const newItems = data.products || [];
       if (isLoadMore) {
-        setProducts(prev => [...prev, ...(data.products || [])]);
+        setProducts(prev => [...prev, ...newItems]);
       } else {
-        setProducts(data.products || []);
+        setProducts(newItems);
       }
       
       setTotalProducts(data.total || 0);
@@ -114,7 +115,7 @@ const Explorer = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Advanced Explorer</h1>
-          <p className="text-gray-500 font-medium">Filtering through {totalProducts} tracked fashion deals.</p>
+          <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} matches.</p>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -334,13 +335,13 @@ const Explorer = () => {
           )}
 
           {products.length > 0 && products.length < totalProducts && (
-            <div className="mt-12 flex justify-center">
+            <div className="mt-12 flex justify-center pb-20">
               <button 
                 onClick={loadMore}
                 disabled={loadingMore}
                 className="bg-primary text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:shadow-primary/30 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
               >
-                {loadingMore ? 'SEARCHING FOR MORE...' : 'LOAD MORE DEALS'}
+                {loadingMore ? 'SEARCHING FOR MORE...' : `LOAD MORE (${totalProducts - products.length} REMAINING)`}
               </button>
             </div>
           )}
