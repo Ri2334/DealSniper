@@ -78,8 +78,7 @@ const initCronJobs = () => {
                 results.totalUpdated += updatedProducts;
                 status.brandsCompleted.push(brand);
                 
-                // Update progress in status
-                status.lastCrawlEnd = new Date();
+                // Update progress stats
                 status.lastCrawlProductsCount = results.totalProducts;
                 status.lastCrawlNewProducts = results.totalNew;
                 status.lastCrawlUpdatedProducts = results.totalUpdated;
@@ -92,6 +91,8 @@ const initCronJobs = () => {
             results.failedBrands.push(brand);
         }
         
+        // HEARTBEAT: Update end time after every brand so UI stays updated
+        status.lastCrawlEnd = new Date();
         await status.save();
       }
 

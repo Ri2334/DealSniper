@@ -203,7 +203,12 @@ class MyntraScraper extends ScraperAdapter {
                 headless: true,
                 executablePath: exePath,
                 proxy: proxy || undefined,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+                args: [
+                    '--no-sandbox', 
+                    '--disable-setuid-sandbox', 
+                    '--disable-dev-shm-usage',
+                    '--disable-http2' // Resolve net::ERR_HTTP2_PROTOCOL_ERROR
+                ]
             });
 
             const context = await browser.newContext({
@@ -395,6 +400,12 @@ class MyntraScraper extends ScraperAdapter {
                 }
             });
             return items;
+        });
+    }
+}
+
+module.exports = new MyntraScraper();
+rn items;
         });
     }
 }
