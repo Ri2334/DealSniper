@@ -18,6 +18,7 @@ exports.getProducts = async (req, res, next) => {
     if (category) query.category = { $in: category.split(',') };
     if (gender) query.gender = { $in: gender.split(',') };
     if (ageGroup) query.ageGroup = { $in: ageGroup.split(',') };
+    if (req.query.sizes) query.sizes = { $in: req.query.sizes.split(',') };
 
     if (newTodayOnly === 'true') {
         const today = new Date();
@@ -34,8 +35,8 @@ exports.getProducts = async (req, res, next) => {
 
     if (priceMin || priceMax) {
       query.currentPrice = {};
-      if (priceMin) query.currentPrice.$gte = Number(priceMin);
-      if (priceMax) query.currentPrice.$lte = Number(priceMax);
+      if (priceMin && priceMin !== '0') query.currentPrice.$gte = Number(priceMin);
+      if (priceMax && priceMax !== '0') query.currentPrice.$lte = Number(priceMax);
     }
 
     if (dealScoreMin || dealScoreMax || hotDealsOnly === 'true') {

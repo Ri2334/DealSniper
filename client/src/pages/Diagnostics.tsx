@@ -1,11 +1,28 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Shield, Database, Cpu, Activity, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Shield, Database, Cpu, Activity, AlertTriangle, Lock, Key, ChevronRight } from 'lucide-react';
+import PremiumLoader from '../components/PremiumLoader';
 
 const Diagnostics = () => {
+  const [isVerified, setIsVerified] = useState(false);
+  const [adminId, setAdminId] = useState('');
+  const [adminPass, setAdminPass] = useState('');
+  const [authError, setAuthError] = useState(false);
+
   const [health, setHealth] = useState<any>(null);
   const [diag, setDiag] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminId === 'admin' && adminPass === 'sniper2026') {
+        setIsVerified(true);
+        setAuthError(false);
+        fetchData();
+    } else {
+        setAuthError(true);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -23,21 +40,75 @@ const Diagnostics = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  if (!isVerified) {
+    return (
+        <div className="min-h-[70vh] flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl shadow-blue-100 border border-gray-100 overflow-hidden">
+                <div className="bg-primary p-8 text-white flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                        <Lock size={32} />
+                    </div>
+                    <div className="text-center">
+                        <h2 className="text-2xl font-black tracking-tight">RESTRICTED ACCESS</h2>
+                        <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1">Admin Credentials Required</p>
+                    </div>
+                </div>
+                <form onSubmit={handleLogin} className="p-8 space-y-6">
+                    <div className="space-y-4">
+                        <div className="relative">
+                            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input 
+                                type="text" 
+                                placeholder="Admin ID" 
+                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm font-bold shadow-inner"
+                                value={adminId}
+                                onChange={(e) => setAdminId(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="relative">
+                            <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input 
+                                type="password" 
+                                placeholder="Password" 
+                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm font-bold shadow-inner"
+                                value={adminPass}
+                                onChange={(e) => setAdminPass(e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
 
-  if (loading) return <div className="flex justify-center py-24"><RefreshCw className="animate-spin text-primary" /></div>;
+                    {authError && (
+                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-black text-center animate-shake">
+                            INVALID CREDENTIALS. ACCESS DENIED.
+                        </div>
+                    )}
+
+                    <button 
+                        type="submit"
+                        className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl text-sm tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 group shadow-xl"
+                    >
+                        VERIFY & ENTER <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+  }
+
+  if (loading) return <PremiumLoader message="ACCESSING SECURE DATA..." />;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center gap-3">
         <Shield className="text-primary" size={32} />
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">System Diagnostics</h1>
+        <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full">ENCRYPTED</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-4 text-gray-400">
                 <Database size={18} />
                 <h3 className="text-xs font-black uppercase tracking-widest">Database</h3>
@@ -49,7 +120,7 @@ const Diagnostics = () => {
                 </div>
                 <div className="flex justify-between">
                     <span className="text-sm font-bold text-gray-500">Total Products</span>
-                    <span className="text-sm font-black">{health?.totalProducts}</span>
+                    <span className="text-sm font-black">{health?.totalProducts?.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-sm font-bold text-gray-500">Total Brands</span>
@@ -62,7 +133,7 @@ const Diagnostics = () => {
             </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-4 text-gray-400">
                 <Cpu size={18} />
                 <h3 className="text-xs font-black uppercase tracking-widest">Cron & Worker</h3>
@@ -87,7 +158,7 @@ const Diagnostics = () => {
             </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-4 text-gray-400">
                 <Activity size={18} />
                 <h3 className="text-xs font-black uppercase tracking-widest">Intelligence</h3>
@@ -98,7 +169,7 @@ const Diagnostics = () => {
                     <span className="text-sm font-black">{Math.round(diag?.avgDealScore)}%</span>
                 </div>
                 <div className="flex justify-between">
-                    <span className="text-sm font-bold text-gray-500">Alerts Today</span>
+                    <span className="text-sm font-bold text-gray-500">Alerts Sent</span>
                     <span className="text-sm font-black">{health?.totalAlertsSent}</span>
                 </div>
                 <div className="flex justify-between">
@@ -120,19 +191,19 @@ const Diagnostics = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm">
               <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Tracked Brands</h3>
               <div className="flex flex-wrap gap-2">
                   {diag?.brands?.map((b: string) => (
-                      <span key={b} className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[10px] font-black uppercase">{b}</span>
+                      <span key={b} className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary transition-colors">{b}</span>
                   ))}
               </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm">
               <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Detected Categories</h3>
               <div className="flex flex-wrap gap-2">
                   {diag?.categories?.map((c: string) => (
-                      <span key={c} className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[10px] font-black uppercase">{c}</span>
+                      <span key={c} className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary transition-colors">{c}</span>
                   ))}
               </div>
           </div>

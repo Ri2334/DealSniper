@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, ExternalLink, Award, Filter, X, Check, RotateCcw } from 'lucide-react';
+import { Search, ExternalLink, Award, Filter, X, Check, RotateCcw, Tag, IndianRupee, Layers } from 'lucide-react';
+import PremiumLoader from '../components/PremiumLoader';
 
 const Explorer = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -19,6 +20,7 @@ const Explorer = () => {
   const [lowestPriceOnly, setLowestPriceOnly] = useState(false);
   const [newTodayOnly, setNewTodayOnly] = useState(false);
   const [priceMax, setPriceMax] = useState('');
+  const [priceMin, setPriceMin] = useState('');
   const [minDiscount, setMinDiscount] = useState('');
   const [minScore, setMinScore] = useState('');
   
@@ -43,6 +45,7 @@ const Explorer = () => {
       if (lowestPriceOnly) params.append('lowestPriceOnly', 'true');
       if (newTodayOnly) params.append('newTodayOnly', 'true');
       if (priceMax && priceMax !== '0' && priceMax !== '') params.append('priceMax', priceMax);
+      if (priceMin && priceMin !== '0' && priceMin !== '') params.append('priceMin', priceMin);
       if (minDiscount && minDiscount !== '0' && minDiscount !== '') params.append('minDiscount', minDiscount);
       if (minScore && minScore !== '0' && minScore !== '') params.append('dealScoreMin', minScore);
 
@@ -74,7 +77,7 @@ const Explorer = () => {
       fetchProducts(1, false);
     }, 500);
     return () => clearTimeout(timer);
-  }, [keyword, selectedBrands, selectedCategories, gender, ageGroup, sortBy, lowestPriceOnly, newTodayOnly, priceMax, minDiscount, minScore]);
+  }, [keyword, selectedBrands, selectedCategories, gender, ageGroup, sortBy, lowestPriceOnly, newTodayOnly, priceMax, priceMin, minDiscount, minScore]);
 
   const loadMore = () => {
     const nextPage = page + 1;
@@ -107,6 +110,7 @@ const Explorer = () => {
     setKeyword('');
     setSortBy('dealScore_desc');
     setPriceMax('');
+    setPriceMin('');
     setMinDiscount('');
     setMinScore('');
   };
@@ -117,7 +121,7 @@ const Explorer = () => {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Advanced Explorer</h1>
-            <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">v4.0 BUILD</span>
+            <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">PREMIUM BUILD</span>
           </div>
           <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} matches in system.</p>
         </div>
@@ -133,7 +137,7 @@ const Explorer = () => {
         
         {/* Sidebar Filters */}
         <aside className={`w-full md:w-72 space-y-6 ${isSidebarOpen ? 'fixed inset-0 z-[60] bg-white p-6 overflow-y-auto' : 'hidden md:block'}`}>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
              <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tighter"><Filter size={20} className="text-primary"/> ADVANCED FILTERS</h3>
              {isSidebarOpen && (
                 <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-100 rounded-full">
@@ -142,85 +146,93 @@ const Explorer = () => {
              )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
                   type="text" 
                   placeholder="Search products..." 
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm font-bold shadow-inner"
+                  className="w-full pl-11 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm font-bold shadow-inner"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                 />
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-2xl space-y-4">
-                <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 gap-3">
+                <button 
+                    onClick={() => setLowestPriceOnly(!lowestPriceOnly)}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${lowestPriceOnly ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-transparent text-gray-500'}`}
+                >
+                    <IndianRupee size={18} className={lowestPriceOnly ? 'text-green-600' : 'text-gray-400'} />
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Record Lows Only</span>
+                </button>
+                <button 
+                    onClick={() => setNewTodayOnly(!newTodayOnly)}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${newTodayOnly ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-transparent text-gray-500'}`}
+                >
+                    <Tag size={18} className={newTodayOnly ? 'text-blue-600' : 'text-gray-400'} />
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Scraped Today</span>
+                </button>
+            </div>
+
+            <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><IndianRupee size={12}/> Budget Range</label>
+                <div className="grid grid-cols-2 gap-2">
                     <input 
-                        type="checkbox" 
-                        id="lowestPrice"
-                        className="w-4 h-4 rounded text-primary focus:ring-primary accent-primary"
-                        checked={lowestPriceOnly}
-                        onChange={(e) => setLowestPriceOnly(e.target.checked)}
+                        type="number" 
+                        placeholder="Min ₹" 
+                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black"
+                        value={priceMin}
+                        onChange={(e) => setPriceMin(e.target.value)}
                     />
-                    <label htmlFor="lowestPrice" className="text-sm font-black text-gray-700 cursor-pointer">LOWEST PRICE EVER</label>
-                </div>
-                <div className="flex items-center gap-2">
                     <input 
-                        type="checkbox" 
-                        id="newToday"
-                        className="w-4 h-4 rounded text-primary focus:ring-primary accent-primary"
-                        checked={newTodayOnly}
-                        onChange={(e) => setNewTodayOnly(e.target.checked)}
+                        type="number" 
+                        placeholder="Max ₹" 
+                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs font-black"
+                        value={priceMax}
+                        onChange={(e) => setPriceMax(e.target.value)}
                     />
-                    <label htmlFor="newToday" className="text-sm font-black text-gray-700 cursor-pointer">NEW TODAY ONLY</label>
                 </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Sort Intelligence</label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Layers size={12}/> Sort Strategy</label>
               <select 
-                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-primary text-sm font-black"
+                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-primary text-xs font-black"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="dealScore_desc">Highest Deal Score</option>
-                <option value="discount_desc">Biggest Discount %</option>
-                <option value="price_asc">Lowest Price First</option>
-                <option value="price_desc">Highest Price First</option>
-                <option value="newest">Recently Updated</option>
+                <option value="dealScore_desc">Intelligence (High to Low)</option>
+                <option value="discount_desc">Price Drop % (Max first)</option>
+                <option value="price_asc">Price (Low to High)</option>
+                <option value="price_desc">Price (High to Low)</option>
+                <option value="newest">Latest Discovery</option>
               </select>
             </div>
 
-            <div className="space-y-4">
-                <div>
-                    <div className="flex justify-between mb-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Max Price: ₹{priceMax || '∞'}</label>
-                    </div>
-                    <input type="range" min="0" max="5000" step="100" className="w-full accent-primary" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
-                </div>
-                <div>
-                    <div className="flex justify-between mb-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Min Discount: {minDiscount || 0}%</label>
-                    </div>
-                    <input type="range" min="0" max="90" step="5" className="w-full accent-primary" value={minDiscount} onChange={(e) => setMinDiscount(e.target.value)} />
-                </div>
-                <div>
-                    <div className="flex justify-between mb-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Min Deal Score: {minScore || 0}</label>
-                    </div>
-                    <input type="range" min="0" max="100" step="5" className="w-full accent-primary" value={minScore} onChange={(e) => setMinScore(e.target.value)} />
+            <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Min Discount: {minDiscount || 0}%</label>
+                <div className="flex flex-wrap gap-2">
+                    {[30, 50, 70, 80].map(d => (
+                        <button 
+                            key={d}
+                            onClick={() => setMinDiscount(minDiscount === String(d) ? '' : String(d))}
+                            className={`px-3 py-2 rounded-lg text-[10px] font-black transition-all border ${minDiscount === String(d) ? 'bg-red-600 border-red-600 text-white' : 'bg-white border-gray-100 text-gray-500'}`}
+                        >
+                            {d}%+
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Brands ({selectedBrands.length})</label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Premium Brands ({selectedBrands.length})</label>
               <div className="max-h-48 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
-                 {brandsList.map(b => (
+                 {brandsList.sort().map(b => (
                     <button 
                         key={b} 
                         onClick={() => toggleBrand(b)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all ${selectedBrands.includes(b) ? 'bg-primary text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all ${selectedBrands.includes(b) ? 'bg-primary text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                     >
                         {b}
                         {selectedBrands.includes(b) && <Check size={12}/>}
@@ -229,14 +241,14 @@ const Explorer = () => {
               </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Categories ({selectedCategories.length})</label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Categories ({selectedCategories.length})</label>
               <div className="grid grid-cols-2 gap-2">
                  {categoriesList.map(c => (
                     <button 
                         key={c} 
                         onClick={() => toggleCategory(c)}
-                        className={`px-2 py-2 rounded-lg text-[10px] font-bold text-center border transition-all ${selectedCategories.includes(c) ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'}`}
+                        className={`px-2 py-2.5 rounded-xl text-[10px] font-bold text-center border transition-all ${selectedCategories.includes(c) ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'}`}
                     >
                         {c}
                     </button>
@@ -245,16 +257,16 @@ const Explorer = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Gender</label>
-                    <select className="w-full px-2 py-2 bg-gray-50 border-none rounded-lg text-xs font-bold" value={gender} onChange={(e) => setGender(e.target.value)}>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gender</label>
+                    <select className="w-full px-2 py-2.5 bg-gray-50 border-none rounded-xl text-[10px] font-bold" value={gender} onChange={(e) => setGender(e.target.value)}>
                         <option value="">Any</option>
                         {['Men', 'Women', 'Unisex', 'Boys', 'Girls'].map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                 </div>
-                <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Age</label>
-                    <select className="w-full px-2 py-2 bg-gray-50 border-none rounded-lg text-xs font-bold" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Age</label>
+                    <select className="w-full px-2 py-2.5 bg-gray-50 border-none rounded-xl text-[10px] font-bold" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
                         <option value="">Any</option>
                         {['Adult', 'Kids'].map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
@@ -265,7 +277,7 @@ const Explorer = () => {
                onClick={clearFilters}
                className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl text-xs tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-xl"
             >
-              <RotateCcw size={14} /> RESET ALL
+              <RotateCcw size={14} /> RESET FILTERS
             </button>
           </div>
         </aside>
@@ -273,30 +285,29 @@ const Explorer = () => {
         {/* Results Grid */}
         <div className="flex-1">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div>
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest animate-pulse">Scanning database...</p>
-            </div>
+            <PremiumLoader message="Scanning database for elite deals..." />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                    <Search size={48} className="text-gray-200 mb-4" />
+                <div className="col-span-full flex flex-col items-center justify-center py-32 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <Search size={32} className="text-gray-200" />
+                    </div>
                     <p className="text-gray-500 font-black uppercase text-xs tracking-widest">No products found matching filters.</p>
-                    <button onClick={clearFilters} className="mt-4 text-primary font-bold text-sm underline">Reset all filters</button>
+                    <button onClick={clearFilters} className="mt-4 text-primary font-bold text-sm underline hover:text-blue-700 transition-colors">Reset all filters</button>
                 </div>
               ) : (
                 products.map((product: any) => (
-                  <a href={product.url} target="_blank" rel="noopener noreferrer" key={product._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group flex flex-col cursor-pointer h-full">
+                  <a href={product.url} target="_blank" rel="noopener noreferrer" key={product._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group flex flex-col cursor-pointer h-full">
                     <div className="relative h-72 overflow-hidden bg-gray-50">
                       <img 
                         src={product.image || 'https://via.placeholder.com/300x400'} 
                         alt={product.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                         loading="lazy"
                       />
                       <div className="absolute top-3 left-3 flex flex-col gap-2">
-                        <div className="bg-white/90 backdrop-blur-sm text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tight shadow-sm flex items-center gap-1.5 border border-primary/20">
+                        <div className="bg-white/90 backdrop-blur-md text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tight shadow-sm flex items-center gap-1.5 border border-primary/10">
                           <Award size={12} /> {product.dealScore} INTEL
                         </div>
                       </div>
@@ -327,7 +338,7 @@ const Explorer = () => {
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-900 text-[10px] font-black rounded-xl uppercase transition-all shadow-sm group-hover:shadow-primary/30">
+                        <div className="flex items-center justify-center gap-2 w-full py-3.5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-900 text-[10px] font-black rounded-xl uppercase transition-all shadow-sm group-hover:shadow-primary/30">
                           Unlock Deal <ExternalLink size={14} />
                         </div>
                       </div>
@@ -338,7 +349,7 @@ const Explorer = () => {
             </div>
           )}
 
-          {products.length > 0 && (
+          {products.length > 0 && products.length < totalProducts && (
             <div className="mt-16 flex flex-col items-center gap-4 pb-20">
               <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Inventory: {totalProducts} items matched</p>
               <button 

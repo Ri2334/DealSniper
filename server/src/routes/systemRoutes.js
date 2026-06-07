@@ -206,13 +206,21 @@ router.get('/diagnostics', async (req, res) => {
 // Test Telegram Alert
 router.post('/test-alert', async (req, res) => {
     try {
-        const product = await Product.findOne({ dealScore: { $gte: 70 } }).sort({ lastUpdated: -1 });
+        // Try to find a hot deal first
+        let product = await Product.findOne({ dealScore: { $gte: 70 } }).sort({ lastUpdated: -1 });
+        
+        // Fallback to the best possible product if no 70+ exists
         if (!product) {
-            return res.status(404).json({ success: false, message: 'No high score product found to test alert' });
+            product = await Product.findOne({ dealScore: { $gt: 0 } }).sort({ dealScore: -1 });
         }
 
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'No product found to test alert' });
+        }
+
+        console.log(`[TEST_ALERT] Sending alert for: ${product.name} (Score: ${product.dealScore})`);
         await TelegramService.sendDealAlert(product, product.dropPercentage || 0, product.dealScore, product.lastPrice || product.mrp, true);
-        res.json({ success: true, message: 'Test alert sent successfully' });
+        res.json({ success: true, message: `Test alert sent successfully for ${product.brand} product` });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
