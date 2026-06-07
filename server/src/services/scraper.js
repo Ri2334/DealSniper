@@ -153,10 +153,17 @@ class MyntraScraper extends ScraperAdapter {
 
         try {
             const proxy = ProxyManager.getPlaywrightConfig();
-            console.log(`[PLAYWRIGHT_START] [${brand}] Launching browser... Proxy: ${proxy ? 'YES' : 'NO'}`);
+            
+            // Explicitly look for the browser in the Docker image's known location
+            // This bypasses any environment variable confusion on Railway
+            const dockerPath = '/ms-playwright/chromium-1223/chrome-headless-shell-linux64/chrome-headless-shell';
+            const exePath = fs.existsSync(dockerPath) ? dockerPath : undefined;
+            
+            console.log(`[PLAYWRIGHT_START] [${brand}] Launching browser... Path: ${exePath || 'DEFAULT'}, Proxy: ${proxy ? 'YES' : 'NO'}`);
             
             browser = await chromium.launch({
                 headless: true,
+                executablePath: exePath,
                 proxy: proxy || undefined,
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
             });

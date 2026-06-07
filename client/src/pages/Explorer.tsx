@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, ExternalLink, Award, Filter, X, ChevronDown, Check, RotateCcw } from 'lucide-react';
+import { Search, ExternalLink, Award, Filter, X, Check, RotateCcw } from 'lucide-react';
 
 const Explorer = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
   const [page, setPage] = useState(1);

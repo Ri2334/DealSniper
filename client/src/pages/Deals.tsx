@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ExternalLink, Flame, Award, TrendingDown, Filter, X, Search, RotateCcw, Check } from 'lucide-react';
+import { ExternalLink, Flame, Award, Filter, X, RotateCcw, Check } from 'lucide-react';
 
 const Deals = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
   const [page, setPage] = useState(1);
