@@ -9,12 +9,12 @@ COPY package.json ./
 # Copy server package files
 COPY server/package*.json ./server/
 
+# Set environment variables for Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 # Install server dependencies
 WORKDIR /app/server
 RUN npm install
-
-# Install Chromium for the specific Playwright version in package.json
-RUN npx playwright install chromium
 
 # Copy the rest of the server code
 COPY server/ .

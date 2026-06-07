@@ -30,9 +30,12 @@ const Deals = () => {
       if (selectedCategories.length > 0) params.append('category', selectedCategories.join(','));
       if (selectedBrands.length > 0) params.append('brand', selectedBrands.join(','));
       if (gender) params.append('gender', gender);
-      if (priceMax) params.append('priceMax', priceMax);
+      if (priceMax && priceMax !== '') params.append('priceMax', priceMax);
 
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`);
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`;
+      console.log(`[DEBUG] Fetching Deals: ${apiUrl}`);
+      
+      const { data } = await axios.get(apiUrl);
       
       if (isLoadMore) {
         setProducts(prev => [...prev, ...(data.products || [])]);

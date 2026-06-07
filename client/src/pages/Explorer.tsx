@@ -32,9 +32,9 @@ const Explorer = () => {
     try {
       const params = new URLSearchParams();
       params.append('page', pageToFetch.toString());
-      params.append('limit', '24'); // Slightly larger grid-friendly limit
+      params.append('limit', '24');
 
-      if (keyword) params.append('keyword', keyword);
+      if (keyword && keyword.trim()) params.append('keyword', keyword.trim());
       if (selectedBrands.length > 0) params.append('brand', selectedBrands.join(','));
       if (selectedCategories.length > 0) params.append('category', selectedCategories.join(','));
       if (gender) params.append('gender', gender);
@@ -42,11 +42,14 @@ const Explorer = () => {
       if (sortBy) params.append('sortBy', sortBy);
       if (lowestPriceOnly) params.append('lowestPriceOnly', 'true');
       if (newTodayOnly) params.append('newTodayOnly', 'true');
-      if (priceMax) params.append('priceMax', priceMax);
-      if (minDiscount) params.append('minDiscount', minDiscount);
-      if (minScore) params.append('dealScoreMin', minScore);
+      if (priceMax && priceMax !== '') params.append('priceMax', priceMax);
+      if (minDiscount && minDiscount !== '') params.append('minDiscount', minDiscount);
+      if (minScore && minScore !== '') params.append('dealScoreMin', minScore);
 
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`);
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`;
+      console.log(`[DEBUG] Fetching Explorer: ${apiUrl}`);
+      
+      const { data } = await axios.get(apiUrl);
       
       if (isLoadMore) {
         setProducts(prev => [...prev, ...(data.products || [])]);
