@@ -8,25 +8,31 @@ class ProductMonitor {
   static categorize(name, url, category = '') {
     const text = `${name} ${url} ${category}`.toLowerCase();
     
-    // Level 1: Most Specific (Accessories & Special Items)
+    // Level 1: Accessories & Special (Highest Specificity)
+    if (text.includes('smartwatch') || text.includes('apple watch')) return 'Smart Watches';
     if (text.includes('watch')) return 'Watches';
-    if (text.includes('perfume') || text.includes('fragrance') || text.includes('deodorant')) return 'Fragrance';
+    if (text.includes('perfume') || text.includes('fragrance') || text.includes('deodorant') || text.includes('cologne')) return 'Fragrance';
     if (text.includes('sunglass')) return 'Sunglasses';
     if (text.includes('wallet') || text.includes('card holder')) return 'Wallets';
     if (text.includes('belt')) return 'Belts';
-    if (text.includes('bag') || text.includes('backpack') || text.includes('handbag') || text.includes('clutch')) return 'Bags';
+    if (text.includes('backpack')) return 'Backpacks';
+    if (text.includes('handbag') || text.includes('clutch') || text.includes('tote')) return 'Handbags';
+    if (text.includes('bag')) return 'Bags';
     
     // Level 2: Footwear
-    if (text.includes('sneaker')) return 'Sneakers';
+    if (text.includes('sneaker') || text.includes('jordans') || text.includes('dunk')) return 'Sneakers';
+    if (text.includes('running shoe') || text.includes('sports shoe') || text.includes('training shoe')) return 'Sports Shoes';
     if (text.includes('boot')) return 'Boots';
-    if (text.includes('flip flop') || text.includes('sandal') || text.includes('loafer')) return 'Casual Shoes';
+    if (text.includes('flip flop') || text.includes('sandal') || text.includes('slider')) return 'Sandals & Sliders';
+    if (text.includes('loafer') || text.includes('formal shoe') || text.includes('oxford') || text.includes('derby')) return 'Formal Shoes';
     if (text.includes('shoe') || text.includes('footwear')) return 'Shoes';
     
     // Level 3: Ethnic & Formal
-    if (text.includes('kurta') || text.includes('kurti') || text.includes('sherwani') || text.includes('ethnic')) return 'Ethnic Wear';
+    if (text.includes('kurta') || text.includes('kurti')) return 'Kurtas';
+    if (text.includes('sherwani') || text.includes('ethnic')) return 'Ethnic Wear';
     if (text.includes('blazer') || text.includes('waistcoat') || text.includes('suit') || text.includes('formal shirt')) return 'Formal Wear';
     
-    // Level 4: Upper Wear (Highly Specific)
+    // Level 4: Upper Wear
     if (text.includes('hoodie')) return 'Hoodies';
     if (text.includes('sweatshirt')) return 'Sweatshirts';
     if (text.includes('polo')) return 'Polo T-Shirts';
@@ -37,16 +43,18 @@ class ProductMonitor {
     if (text.includes('jeans') || text.includes('denim')) return 'Jeans';
     if (text.includes('cargo')) return 'Cargo Trousers';
     if (text.includes('short')) return 'Shorts';
-    if (text.includes('trouser') || text.includes('chino') || text.includes('pant') || text.includes('jogger')) return 'Trousers';
+    if (text.includes('jogger') || text.includes('track pant')) return 'Joggers & Track Pants';
+    if (text.includes('trouser') || text.includes('chino') || text.includes('pant')) return 'Trousers';
     
     // Level 6: Outerwear
-    if (text.includes('jacket') || text.includes('coat') || text.includes('parka') || text.includes('bomber')) return 'Jackets';
+    if (text.includes('jacket') || text.includes('coat') || text.includes('parka') || text.includes('bomber') || text.includes('windbreaker')) return 'Jackets';
     if (text.includes('sweater') || text.includes('pullover') || text.includes('cardigan')) return 'Sweaters';
     
-    // Level 7: Misc
-    if (text.includes('brief') || text.includes('trunk') || text.includes('boxer') || text.includes('vest') || text.includes('innerwear')) return 'Innerwear';
+    // Level 7: Essentials
+    if (text.includes('brief') || text.includes('trunk') || text.includes('boxer')) return 'Underwear';
     if (text.includes('sock')) return 'Socks';
-    if (text.includes('active') || text.includes('track') || text.includes('gym') || text.includes('training')) return 'Activewear';
+    if (text.includes('vest') || text.includes('innerwear')) return 'Innerwear';
+    if (text.includes('active') || text.includes('gym') || text.includes('training')) return 'Activewear';
     
     return 'Other';
   }

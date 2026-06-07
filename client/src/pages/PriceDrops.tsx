@@ -43,10 +43,10 @@ const PriceDrops = () => {
 
   const brandsList = ['H&M', "Levi's", 'Rare Rabbit', 'U.S. Polo Assn.', 'Van Heusen', 'Tommy Hilfiger', 'Calvin Klein', 'Allen Solly', 'Arrow', 'Louis Philippe', 'Jack & Jones', 'Wrogn', 'Roadster', 'HRX by Hrithik Roshan', 'Puma', 'Adidas', 'Nike', 'Flying Machine', 'Pepe Jeans', 'Celio'];
   const categoriesList = [
-    'Shirts', 'Polo T-Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Cargo Trousers', 'Shorts', 'Jackets', 
-    'Hoodies', 'Sweatshirts', 'Sweaters', 'Shoes', 'Sneakers', 'Casual Shoes', 'Watches', 'Fragrance', 
-    'Sunglasses', 'Belts', 'Wallets', 'Bags', 'Ethnic Wear', 
-    'Formal Wear', 'Innerwear', 'Socks', 'Activewear', 'Other'
+    'Shirts', 'Polo T-Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Cargo Trousers', 'Joggers & Track Pants', 'Shorts', 
+    'Jackets', 'Hoodies', 'Sweatshirts', 'Sweaters', 'Shoes', 'Sneakers', 'Sports Shoes', 'Formal Shoes', 
+    'Sandals & Sliders', 'Boots', 'Watches', 'Smart Watches', 'Fragrance', 'Sunglasses', 'Belts', 'Wallets', 
+    'Backpacks', 'Handbags', 'Bags', 'Kurtas', 'Ethnic Wear', 'Formal Wear', 'Underwear', 'Socks', 'Activewear', 'Other'
   ];
 
   const toggleBrand = (brand: string) => {

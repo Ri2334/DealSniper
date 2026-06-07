@@ -77,6 +77,12 @@ const initCronJobs = () => {
                 results.totalNew += newProducts;
                 results.totalUpdated += updatedProducts;
                 status.brandsCompleted.push(brand);
+                
+                // Update progress in status
+                status.lastCrawlEnd = new Date();
+                status.lastCrawlProductsCount = results.totalProducts;
+                status.lastCrawlNewProducts = results.totalNew;
+                status.lastCrawlUpdatedProducts = results.totalUpdated;
             } else {
                 console.warn(`[CRON] No products found for ${brand}`);
                 results.failedBrands.push(brand);

@@ -99,7 +99,7 @@ exports.getDashboardAnalytics = async (req, res, next) => {
 
     // Filter analytics by availability and stale threshold
     const staleThreshold = new Date();
-    staleThreshold.setHours(staleThreshold.getHours() - 48);
+    staleThreshold.setHours(staleThreshold.getHours() - 12);
 
     const baseQuery = { 
         availability: true,
