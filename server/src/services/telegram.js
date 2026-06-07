@@ -6,10 +6,10 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 const channelId = process.env.TELEGRAM_CHANNEL_ID;
 
 const CATEGORIES = [
-  'Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Shorts', 'Jackets', 
-  'Sweatshirts & Hoodies', 'Shoes', 'Watches', 'Fragrance', 
+  'Shirts', 'Polo T-Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Cargo Trousers', 'Shorts', 'Jackets', 
+  'Hoodies', 'Sweatshirts', 'Sweaters', 'Shoes', 'Sneakers', 'Casual Shoes', 'Watches', 'Fragrance', 
   'Sunglasses', 'Belts', 'Wallets', 'Bags', 'Ethnic Wear', 
-  'Formal Wear', 'Innerwear & Socks', 'Activewear', 'Other'
+  'Formal Wear', 'Innerwear', 'Socks', 'Activewear', 'Other'
 ];
 const BRANDS = ['H&M', 'Levis', 'RARE RABBIT', 'U.S. Polo Assn.', 'Van Heusen', 'Tommy Hilfiger', 'Calvin Klein', 'Allen Solly', 'Arrow', 'Louis Philippe', 'Jack & Jones', 'Wrogn', 'Roadster', 'HRX by Hrithik Roshan', 'Puma', 'Adidas', 'Nike', 'Flying Machine', 'Pepe Jeans', 'Celio'];
 

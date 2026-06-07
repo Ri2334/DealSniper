@@ -345,9 +345,18 @@ class MyntraScraper extends ScraperAdapter {
 
     formatProducts(items, brand) {
         return items.map(item => {
-            // Myntra availability logic
+            // Myntra availability logic - very aggressive to avoid "Out of Stock" showing up
             let isAvailable = true;
-            if (item.inventory === 0 || item.outOfStock === true || item.available === false) {
+            
+            // Check all known Myntra availability flags
+            if (
+                item.inventory === 0 || 
+                item.outOfStock === true || 
+                item.available === false || 
+                item.inStock === false ||
+                item.status === 'out_of_stock' ||
+                (item.totalInventoryCount !== undefined && item.totalInventoryCount === 0)
+            ) {
                 isAvailable = false;
             }
 

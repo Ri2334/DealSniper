@@ -10,7 +10,19 @@ exports.getProducts = async (req, res, next) => {
       newTodayOnly, sortBy, page = 1, limit = 20 
     } = req.query;
     
-    let query = {};
+    // STALE CHECK: Hide products not seen in the last 48 hours (likely OOS/Removed)
+    const staleThreshold = new Date();
+    staleThreshold.setHours(staleThreshold.getHours() - 48);
+
+    let query = { 
+        availability: true,
+        lastUpdated: { $gte: staleThreshold }
+    };
+
+    if (req.query.showAll === 'true') {
+        delete query.availability;
+        delete query.lastUpdated;
+    }
 
     if (keyword) query.name = { $regex: keyword, $options: 'i' };
     
@@ -85,8 +97,17 @@ exports.getDashboardAnalytics = async (req, res, next) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const totalProducts = await Product.countDocuments({ availability: true });
-    const activeDeals = await Product.countDocuments({ dealScore: { $gte: 70 }, availability: true });
+    // Filter analytics by availability and stale threshold
+    const staleThreshold = new Date();
+    staleThreshold.setHours(staleThreshold.getHours() - 48);
+
+    const baseQuery = { 
+        availability: true,
+        lastUpdated: { $gte: staleThreshold }
+    };
+
+    const totalProducts = await Product.countDocuments(baseQuery);
+    const activeDeals = await Product.countDocuments({ ...baseQuery, dealScore: { $gte: 70 } });
     const alertsSent = await Alert.countDocuments();
     
     // Time ranges
@@ -95,42 +116,42 @@ exports.getDashboardAnalytics = async (req, res, next) => {
 
     // Top 10 Deals Today (by Deal Score)
     const topDealsToday = await Product.find({ 
+      ...baseQuery,
       lastUpdated: { $gte: today },
-      dealScore: { $gt: 0 },
-      availability: true
+      dealScore: { $gt: 0 }
     }).sort({ dealScore: -1 }).limit(10);
 
     // Top 10 Deals This Week (by Deal Score)
     const topDealsWeek = await Product.find({ 
+      ...baseQuery,
       lastUpdated: { $gte: lastWeek },
-      dealScore: { $gt: 0 },
-      availability: true
+      dealScore: { $gt: 0 }
     }).sort({ dealScore: -1 }).limit(10);
 
     // Top 10 Lowest Ever (hit lowest price recently, ranked by score)
     const topLowestEver = await Product.find({
+      ...baseQuery,
       lastUpdated: { $gte: today },
-      $expr: { $lte: ["$currentPrice", "$lowestPrice"] },
-      availability: true
+      $expr: { $lte: ["$currentPrice", "$lowestPrice"] }
     }).sort({ dealScore: -1 }).limit(10);
 
     // Brand Breakdown
     const brandStats = await Product.aggregate([
-      { $match: { availability: true } },
+      { $match: baseQuery },
       { $group: { _id: "$brand", count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]);
 
     // Category Breakdown
     const categoryStats = await Product.aggregate([
-      { $match: { availability: true } },
+      { $match: baseQuery },
       { $group: { _id: "$category", count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]);
 
     // Average Deal Score
     const avgScoreResult = await Product.aggregate([
-      { $match: { dealScore: { $gt: 0 } } },
+      { $match: { ...baseQuery, dealScore: { $gt: 0 } } },
       { $group: { _id: null, avg: { $avg: "$dealScore" } } }
     ]);
     const averageDealScore = avgScoreResult.length > 0 ? Math.round(avgScoreResult[0].avg) : 0;
