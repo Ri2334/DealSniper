@@ -5,6 +5,9 @@ import { ExternalLink, Flame, Award, TrendingDown, Filter, X, Search, RotateCcw,
 const Deals = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Filter States
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -13,13 +16,16 @@ const Deals = () => {
   const [priceMax, setPriceMax] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const fetchDeals = async () => {
-    setLoading(true);
+  const fetchDeals = async (pageToFetch = 1, isLoadMore = false) => {
+    if (isLoadMore) setLoadingMore(true);
+    else setLoading(true);
+
     try {
       const params = new URLSearchParams();
       params.append('minDiscount', '50');
       params.append('sortBy', 'dealScore_desc');
-      params.append('limit', '50');
+      params.append('page', pageToFetch.toString());
+      params.append('limit', '24');
       
       if (selectedCategories.length > 0) params.append('category', selectedCategories.join(','));
       if (selectedBrands.length > 0) params.append('brand', selectedBrands.join(','));
@@ -27,17 +33,32 @@ const Deals = () => {
       if (priceMax) params.append('priceMax', priceMax);
 
       const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`);
-      setProducts(data.products || []);
+      
+      if (isLoadMore) {
+        setProducts(prev => [...prev, ...(data.products || [])]);
+      } else {
+        setProducts(data.products || []);
+      }
+      
+      setTotalProducts(data.total || 0);
     } catch (error) {
       console.error('Error fetching deals:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchDeals();
+    setPage(1);
+    fetchDeals(1, false);
   }, [selectedCategories, selectedBrands, gender, priceMax]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchDeals(nextPage, true);
+  };
 
   const brandsList = ['H&M', "Levi's", 'Rare Rabbit', 'U.S. Polo Assn.', 'Van Heusen', 'Tommy Hilfiger', 'Calvin Klein', 'Allen Solly', 'Arrow', 'Louis Philippe', 'Jack & Jones', 'Wrogn', 'Roadster', 'HRX by Hrithik Roshan', 'Puma', 'Adidas', 'Nike', 'Flying Machine', 'Pepe Jeans', 'Celio'];
   const categoriesList = ['Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Shorts', 'Jackets', 'Sweatshirts', 'Shoes', 'Accessories', 'Other'];
@@ -208,6 +229,18 @@ const Deals = () => {
                   </a>
                 ))
               )}
+            </div>
+          )}
+
+          {products.length > 0 && products.length < totalProducts && (
+            <div className="mt-12 flex justify-center">
+              <button 
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="bg-primary text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:shadow-primary/30 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+              >
+                {loadingMore ? 'SEARCHING FOR MORE...' : 'LOAD MORE DEALS'}
+              </button>
             </div>
           )}
         </div>

@@ -6,6 +6,8 @@ const Explorer = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   // Filter States
   const [keyword, setKeyword] = useState('');
@@ -23,10 +25,15 @@ const Explorer = () => {
   // Mobile sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = async (pageToFetch = 1, isLoadMore = false) => {
+    if (isLoadMore) setLoadingMore(true);
+    else setLoading(true);
+
     try {
       const params = new URLSearchParams();
+      params.append('page', pageToFetch.toString());
+      params.append('limit', '24'); // Slightly larger grid-friendly limit
+
       if (keyword) params.append('keyword', keyword);
       if (selectedBrands.length > 0) params.append('brand', selectedBrands.join(','));
       if (selectedCategories.length > 0) params.append('category', selectedCategories.join(','));
@@ -40,21 +47,35 @@ const Explorer = () => {
       if (minScore) params.append('dealScoreMin', minScore);
 
       const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`);
-      setProducts(data.products || []);
+      
+      if (isLoadMore) {
+        setProducts(prev => [...prev, ...(data.products || [])]);
+      } else {
+        setProducts(data.products || []);
+      }
+      
       setTotalProducts(data.total || 0);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchProducts();
+      setPage(1);
+      fetchProducts(1, false);
     }, 500);
     return () => clearTimeout(timer);
   }, [keyword, selectedBrands, selectedCategories, gender, ageGroup, sortBy, lowestPriceOnly, newTodayOnly, priceMax, minDiscount, minScore]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage, true);
+  };
 
   const brandsList = ['H&M', "Levi's", 'Rare Rabbit', 'U.S. Polo Assn.', 'Van Heusen', 'Tommy Hilfiger', 'Calvin Klein', 'Allen Solly', 'Arrow', 'Louis Philippe', 'Jack & Jones', 'Wrogn', 'Roadster', 'HRX by Hrithik Roshan', 'Puma', 'Adidas', 'Nike', 'Flying Machine', 'Pepe Jeans', 'Celio'];
   const categoriesList = ['Shirts', 'T-Shirts', 'Jeans', 'Trousers', 'Shorts', 'Jackets', 'Sweatshirts', 'Shoes', 'Accessories', 'Other'];
@@ -306,6 +327,18 @@ const Explorer = () => {
                   </a>
                 ))
               )}
+            </div>
+          )}
+
+          {products.length > 0 && products.length < totalProducts && (
+            <div className="mt-12 flex justify-center">
+              <button 
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="bg-primary text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:shadow-primary/30 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+              >
+                {loadingMore ? 'SEARCHING FOR MORE...' : 'LOAD MORE DEALS'}
+              </button>
             </div>
           )}
         </div>
