@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { Shield, Database, Cpu, Activity, AlertTriangle, Lock, Key, ChevronRight } from 'lucide-react';
 import PremiumLoader from '../components/PremiumLoader';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ExternalLink, Flame, Award, Filter, X, RotateCcw, Check, IndianRupee, Layers } from 'lucide-react';
+import { ExternalLink, Flame, Award, Filter, X, RotateCcw, Check, IndianRupee } from 'lucide-react';
 import PremiumLoader from '../components/PremiumLoader';
 
 const Deals = () => {

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { chromium } = require('playwright');
+const fs = require('fs');
 const ProxyManager = require('./proxyManager');
 const StealthUtils = require('../utils/stealth');
 
